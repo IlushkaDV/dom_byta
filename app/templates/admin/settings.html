@@ -23,6 +23,9 @@
           <p style="color:#8a8174;font-size:13px;margin-bottom:8px">Фото ещё не загружено.</p>
           {% endif %}
           <input type="file" name="{{ key }}" accept="image/*">
+          {% if key == 'manager_signature' %}
+          <p style="color:#8a8174;font-size:12.5px;margin-top:6px">Сфотографируйте или отсканируйте настоящую подпись на чистом белом листе (без линейек и теней) — фон будет убран автоматически, и на сайте подпись «прорисуется» при прокрутке. Если загрузите PNG с прозрачным фоном — он используется как есть.</p>
+          {% endif %}
         {% elif key in ('about_text',) %}
           <textarea name="{{ key }}" rows="8">{{ s.get(key, '') }}</textarea>
         {% elif key in ('hero_subtitle','manager_quote') %}
