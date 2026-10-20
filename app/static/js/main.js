@@ -50,26 +50,23 @@
   }, { threshold: 0.12 });
   $$(".reveal").forEach(el => io.observe(el));
 
-  /* ---------- Tabs (прайс по направлениям) ---------- */
-  function activateTab(id) {
-    const btn = $("#" + id);
-    if (!btn) return;
-    $$(".tab").forEach(b => b.classList.toggle("active", b === btn));
-    $$(".tab-panel").forEach(p => p.classList.toggle("hidden", p.id !== id));
-  }
-  $$(".tab").forEach(btn => btn.addEventListener("click", () => activateTab(btn.dataset.tab)));
-
-  /* ---------- Прайс: модальное окно ---------- */
+  /* ---------- Прайс: модальное окно (без переключения вкладок) ---------- */
   const pricesModal = $("#pricesModal");
+  const pricesTitle = $("#pricesModalTitle");
   function openPrices(tabKey) {
     if (!pricesModal) return;
+    $$(".tab-panel").forEach(p => p.classList.toggle("hidden", p.id !== "tab-" + tabKey));
+    if (pricesTitle) {
+      const btn = document.querySelector('[data-open-prices="' + tabKey + '"]');
+      const card = btn && btn.closest(".dir-card");
+      const h3 = card && card.querySelector("h3");
+      pricesTitle.textContent = h3 ? "Цены — " + h3.textContent : "Цены на основные услуги";
+    }
     pricesModal.hidden = false;
+    const panel = pricesModal.querySelector(".prices-modal-panel");
+    if (panel) panel.scrollTop = 0;
     requestAnimationFrame(() => pricesModal.classList.add("open"));
     document.body.style.overflow = "hidden";
-    if (tabKey) {
-      const tabId = "tab-" + tabKey;
-      if ($("#" + tabId)) activateTab(tabId);
-    }
   }
   function closePrices() {
     if (!pricesModal) return;

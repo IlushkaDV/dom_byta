@@ -66,19 +66,22 @@
   <div class="container">
     <span class="section-kicker center reveal">Что мы делаем</span>
     <h2 class="section-title center reveal">Четыре направления ателье</h2>
-    <div class="dir-list">
+    <div class="dir-grid">
       {% for d in directions %}
-      <button type="button" class="dir-item reveal" data-delay="{{ loop.index0 * 90 }}" data-open-prices="{{ d.tab }}">
-        <div class="dir-num">{{ '%02d' % (loop.index) }}</div>
-        <div class="dir-icon" aria-hidden="true">{{ d.icon }}</div>
-        <div class="dir-body">
+      <article class="dir-card reveal" data-delay="{{ loop.index0 * 90 }}">
+        <div class="dir-photo">
+          <img src="/static/img/dir_{{ d.tab }}.svg" alt="" loading="lazy">
+          <span class="dir-badge">{{ d.icon }}</span>
+        </div>
+        <div class="dir-card-body">
           <h3>{{ d.title }}</h3>
           <p>{{ d.text }}</p>
+          <ul class="dir-tags">
+            {% for tag in d.tags %}<li>{{ tag }}</li>{% endfor %}
+          </ul>
+          <button type="button" class="btn btn-dark dir-btn" data-open-prices="{{ d.tab }}">Смотреть цены</button>
         </div>
-        <span class="dir-cta">Смотреть цены
-          <svg width="34" height="12" viewBox="0 0 34 12" fill="none"><path d="M0 6h30M25 1l5 5-5 5" stroke="currentColor" stroke-width="1.6"/></svg>
-        </span>
-      </button>
+      </article>
       {% endfor %}
     </div>
   </div>
@@ -88,19 +91,13 @@
 <div class="prices-modal" id="pricesModal" role="dialog" aria-modal="true" aria-label="Прайс-лист" hidden>
   <div class="prices-modal-backdrop" data-close-prices></div>
   <div class="prices-modal-panel">
-    <button type="button" class="prices-modal-close" data-close-prices aria-label="Закрыть">×</button>
+    <button type="button" class="prices-modal-close" data-close-prices aria-label="Закрыть"><span class="btn-hole"></span><span class="btn-hole"></span></button>
     <span class="section-kicker">Прайс-лист</span>
-    <h2 class="prices-modal-title">Цены на основные услуги</h2>
+    <h2 class="prices-modal-title" id="pricesModalTitle">Цены на основные услуги</h2>
     <p class="section-note">Цены указаны «от» — точную стоимость мастер назовёт после осмотра изделия.</p>
 
-    <div class="tabs" role="tablist">
-      {% for t in price_tabs %}
-      <button class="tab {% if loop.first %}active{% endif %}" data-tab="tab-{{ t.dir.tab }}" id="tabbtn-{{ t.dir.tab }}">{{ t.dir.title }}</button>
-      {% endfor %}
-    </div>
-
     {% for t in price_tabs %}
-    <div class="tab-panel {% if not loop.first %}hidden{% endif %}" id="tab-{{ t.dir.tab }}">
+    <div class="tab-panel hidden" id="tab-{{ t.dir.tab }}">
       <div class="price-list">
         {% for srv in t['items'] %}
         <div class="price-row">
