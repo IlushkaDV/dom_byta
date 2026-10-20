@@ -71,8 +71,8 @@ def index(request: Request):
     categories = {}
     for srv in services:
         categories.setdefault(srv["category"], []).append(srv)
-    return templates.TemplateResponse("index.html", {
-        "request": request, "s": s, "services": services,
+    return templates.TemplateResponse(request, "index.html", context={
+        "s": s, "services": services,
         "categories": categories, "advantages": advantages,
         "gallery": gallery, "reviews": reviews,
     })
@@ -100,7 +100,7 @@ def create_order(
 def login_page(request: Request):
     if get_current_admin(request):
         return RedirectResponse("/admin", status_code=303)
-    return templates.TemplateResponse("admin/login.html", {"request": request})
+    return templates.TemplateResponse(request, "admin/login.html")
 
 
 @app.post("/admin/login")
@@ -109,7 +109,8 @@ def login(request: Request, login_name: str = Form(...), password: str = Form(..
         row = conn.execute("SELECT * FROM admins WHERE login=?", (login_name,)).fetchone()
     if not row or not verify_password(password, row["password_hash"]):
         return templates.TemplateResponse(
-            "admin/login.html", {"request": request, "error": "Неверный логин или пароль"},
+            request, "admin/login.html",
+            context={"error": "Неверный логин или пароль"},
             status_code=401)
     resp = RedirectResponse("/admin", status_code=303)
     resp.set_cookie("atele_admin_session", make_session_token(login_name),
@@ -138,8 +139,8 @@ def admin_dashboard(request: Request, admin: str = Depends(require_admin)):
         }
         recent_orders = [dict(r) for r in conn.execute(
             "SELECT * FROM orders ORDER BY created_at DESC LIMIT 5")]
-    return templates.TemplateResponse("admin/dashboard.html", {
-        "request": request, "admin": admin, "stats": stats, "recent_orders": recent_orders,
+    return templates.TemplateResponse(request, "admin/dashboard.html", context={
+        "admin": admin, "stats": stats, "recent_orders": recent_orders,
     })
 
 
@@ -155,8 +156,8 @@ def admin_orders(request: Request, admin: str = Depends(require_admin), status: 
             rows = conn.execute("SELECT * FROM orders WHERE status=? ORDER BY created_at DESC", (status,)).fetchall()
         else:
             rows = conn.execute("SELECT * FROM orders ORDER BY created_at DESC").fetchall()
-    return templates.TemplateResponse("admin/orders.html", {
-        "request": request, "admin": admin, "orders": [dict(r) for r in rows],
+    return templates.TemplateResponse(request, "admin/orders.html", context={
+        "admin": admin, "orders": [dict(r) for r in rows],
         "status_labels": ORDERS_STATUS_LABELS, "cur_status": status,
     })
 
@@ -183,8 +184,8 @@ def admin_order_delete(order_id: int, admin: str = Depends(require_admin)):
 def admin_services(request: Request, admin: str = Depends(require_admin)):
     with db.db() as conn:
         rows = [dict(r) for r in conn.execute("SELECT * FROM services ORDER BY sort_order, id")]
-    return templates.TemplateResponse("admin/services.html", {
-        "request": request, "admin": admin, "services": rows,
+    return templates.TemplateResponse(request, "admin/services.html", context={
+        "admin": admin, "services": rows,
         "edit_id": None, "edit": None,
     })
 
@@ -244,8 +245,8 @@ def _save_upload(file: UploadFile) -> str | None:
 def admin_gallery(request: Request, admin: str = Depends(require_admin)):
     with db.db() as conn:
         rows = [dict(r) for r in conn.execute("SELECT * FROM gallery_items ORDER BY id DESC")]
-    return templates.TemplateResponse("admin/gallery.html", {
-        "request": request, "admin": admin, "items": rows,
+    return templates.TemplateResponse(request, "admin/gallery.html", context={
+        "admin": admin, "items": rows,
     })
 
 
@@ -293,8 +294,8 @@ def admin_gallery_delete(item_id: int, admin: str = Depends(require_admin)):
 def admin_reviews(request: Request, admin: str = Depends(require_admin)):
     with db.db() as conn:
         rows = [dict(r) for r in conn.execute("SELECT * FROM reviews ORDER BY created_at DESC")]
-    return templates.TemplateResponse("admin/reviews.html", {
-        "request": request, "admin": admin, "reviews": rows,
+    return templates.TemplateResponse(request, "admin/reviews.html", context={
+        "admin": admin, "reviews": rows,
     })
 
 
@@ -347,8 +348,8 @@ SETTING_FIELDS = [
 @app.get("/admin/settings", response_class=HTMLResponse)
 def admin_settings(request: Request, admin: str = Depends(require_admin)):
     s = db.get_all_settings()
-    return templates.TemplateResponse("admin/settings.html", {
-        "request": request, "admin": admin, "s": s, "fields": SETTING_FIELDS,
+    return templates.TemplateResponse(request, "admin/settings.html", context={
+        "admin": admin, "s": s, "fields": SETTING_FIELDS,
     })
 
 
@@ -365,7 +366,7 @@ async def admin_settings_save(request: Request, admin: str = Depends(require_adm
 
 @app.get("/admin/password", response_class=HTMLResponse)
 def admin_password_page(request: Request, admin: str = Depends(require_admin)):
-    return templates.TemplateResponse("admin/password.html", {"request": request, "admin": admin})
+    return templates.TemplateResponse(request, "admin/password.html", context={"admin": admin})
 
 
 @app.post("/admin/password")
