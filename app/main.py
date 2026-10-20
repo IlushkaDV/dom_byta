@@ -268,6 +268,16 @@ async def _pick_upload(request_data, name: str) -> str | None:
     return f"/static/uploads/{fname}"
 
 
+def _remove_upload(path: str | None) -> None:
+    """Удалить сохранённый файл загрузки (по URL-пути из настроек/БД)."""
+    if not path or not path.startswith("/static/uploads/"):
+        return
+    try:
+        os.remove(os.path.join(BASE_DIR, "static", path[len("/static/"):]))
+    except OSError:
+        pass
+
+
 @app.post("/admin/gallery/save")
 async def admin_gallery_save(
     request: Request,
@@ -394,6 +404,8 @@ SETTING_FIELDS = [
     ("hero_title", "Заголовок на первом экране"),
     ("hero_subtitle", "Подзаголовок на первом экране"),
     ("about_text", "Текст раздела «О нас»"),
+    ("manager_photo", "Фото заведующей (раздел «О нас», круглое)"),
+    ("hero_image", "Фоновое фото первого экрана (желательно вертикальное, ≥1200px)"),
     ("manager_name", "Имя руководителя"),
     ("manager_role", "Должность руководителя"),
     ("manager_note", "Примечание о руководителе"),
@@ -405,12 +417,15 @@ SETTING_FIELDS = [
     ("hours_weekend", "График (выходные)"),
 ]
 
+# настройки-картинки: сохраняются через загрузку файла, а не текстовым полем
+IMAGE_SETTINGS = {"manager_photo", "hero_image"}
+
 
 @app.get("/admin/settings", response_class=HTMLResponse)
 def admin_settings(request: Request, admin: str = Depends(require_admin)):
     s = db.get_all_settings()
     return templates.TemplateResponse(request, "admin/settings.html", context={
-        "admin": admin, "s": s, "fields": SETTING_FIELDS,
+        "admin": admin, "s": s, "fields": SETTING_FIELDS, "image_keys": IMAGE_SETTINGS,
     })
 
 
@@ -418,7 +433,18 @@ def admin_settings(request: Request, admin: str = Depends(require_admin)):
 async def admin_settings_save(request: Request, admin: str = Depends(require_admin)):
     form = await request.form()
     for key, _label in SETTING_FIELDS:
-        if key in form:
+        if key in IMAGE_SETTINGS:
+            new_path = await _pick_upload(form, key)
+            if new_path:
+                old = db.get_all_settings().get(key, "")
+                db.set_setting(key, new_path)
+                _remove_upload(old)  # чистим старый файл
+            remove_flag = str(form.get(f"{key}_remove") or "").strip()
+            if remove_flag:
+                old = db.get_all_settings().get(key, "")
+                db.set_setting(key, "")
+                _remove_upload(old)
+        elif key in form:
             db.set_setting(key, str(form[key]).strip())
     return redirect("/admin/settings?saved=1")
 

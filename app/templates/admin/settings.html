@@ -6,12 +6,24 @@
 <div class="panel">
   <h2>Контент публичного сайта</h2>
   <p style="color:#8a8174;font-size:13.5px;margin-bottom:20px">Изменения сразу отображаются на сайте после сохранения.</p>
-  <form method="post" action="/admin/settings">
+  <form method="post" action="/admin/settings" enctype="multipart/form-data">
     <div class="form-grid">
       {% for key, label in fields %}
-      <div class="field {% if key in ('about_text','hero_subtitle') %}full{% endif %}">
+      <div class="field {% if key in ('about_text','hero_subtitle') or key in image_keys %}full{% endif %}">
         <label>{{ label }}</label>
-        {% if key in ('about_text',) %}
+        {% if key in image_keys %}
+          {% if s.get(key) %}
+          <div style="display:flex;align-items:center;gap:14px;margin-bottom:8px">
+            <img src="{{ s[key] }}" alt="" style="width:84px;height:84px;object-fit:cover;border-radius:12px;border:1px solid #e5ddcf">
+            <label style="font-weight:400;font-size:13px;display:flex;gap:6px;align-items:center">
+              <input type="checkbox" name="{{ key }}_remove" value="1"> Удалить это фото
+            </label>
+          </div>
+          {% else %}
+          <p style="color:#8a8174;font-size:13px;margin-bottom:8px">Фото ещё не загружено.</p>
+          {% endif %}
+          <input type="file" name="{{ key }}" accept="image/*">
+        {% elif key in ('about_text',) %}
           <textarea name="{{ key }}" rows="8">{{ s.get(key, '') }}</textarea>
         {% elif key in ('hero_subtitle',) %}
           <textarea name="{{ key }}" rows="3">{{ s.get(key, '') }}</textarea>

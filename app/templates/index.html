@@ -3,7 +3,11 @@
 
 <!-- ===== HERO ===== -->
 <section class="hero">
+  {% if s.hero_image %}
+  <div class="hero-bg" data-parallax="0.3" style="background-image:url('{{ s.hero_image }}')"></div>
+  {% else %}
   <div class="hero-bg" data-parallax="0.3"></div>
+  {% endif %}
   <div class="hero-overlay"></div>
   <div class="container hero-content">
     <span class="hero-badge reveal">ТЦ «Дом Быта» · 6 этаж · Хабаровск</span>
@@ -48,7 +52,11 @@
       <p class="reveal">{{ para }}</p>
       {% endfor %}
       <div class="manager-card reveal">
+        {% if s.manager_photo %}
+        <img class="manager-avatar manager-photo" src="{{ s.manager_photo }}" alt="{{ s.manager_name }}">
+        {% else %}
         <div class="manager-avatar">{{ s.manager_name.split(' ')[0][0] }}{{ s.manager_name.split(' ')[1][0] if ' ' in s.manager_name else '' }}</div>
+        {% endif %}
         <div>
           <b>{{ s.manager_name }}</b>
           <span>{{ s.manager_role }}</span>

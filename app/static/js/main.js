@@ -10,8 +10,15 @@
 
   /* ---- Header scroll state ---- */
   const header = document.getElementById("header");
-  const onScroll = () => header && header.classList.toggle("scrolled", scrollY > 40);
+  const heroEl = document.querySelector(".hero");
+  const onScroll = () => {
+    if (!header) return;
+    // порог = низ первого экрана (чтобы светлая шапка оставалась, пока hero в зоне видимости)
+    const threshold = heroEl ? Math.max(heroEl.offsetHeight - 90, 200) : 40;
+    header.classList.toggle("scrolled", scrollY > threshold);
+  };
   addEventListener("scroll", onScroll, { passive: true });
+  addEventListener("resize", onScroll);
   onScroll();
 
   /* ---- Mobile menu ---- */
