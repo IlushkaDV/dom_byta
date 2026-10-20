@@ -2,3 +2,8 @@ __pycache__/
 *.pyc
 *.log
 data/*.db
+
+__pycache__/
+*.pyc
+server.log
+data/atele.db
