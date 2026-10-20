@@ -58,11 +58,30 @@
     $$(".tab-panel").forEach(p => p.classList.toggle("hidden", p.id !== id));
   }
   $$(".tab").forEach(btn => btn.addEventListener("click", () => activateTab(btn.dataset.tab)));
-  // карточки направлений ведут на нужную вкладку
-  $$("[data-goto-tab]").forEach(card => card.addEventListener("click", () => {
-    const tabId = "tab-" + card.dataset.gotoTab;
-    if ($("#" + tabId)) setTimeout(() => activateTab(tabId), 300);
-  }));
+
+  /* ---------- Прайс: модальное окно ---------- */
+  const pricesModal = $("#pricesModal");
+  function openPrices(tabKey) {
+    if (!pricesModal) return;
+    pricesModal.hidden = false;
+    requestAnimationFrame(() => pricesModal.classList.add("open"));
+    document.body.style.overflow = "hidden";
+    if (tabKey) {
+      const tabId = "tab-" + tabKey;
+      if ($("#" + tabId)) activateTab(tabId);
+    }
+  }
+  function closePrices() {
+    if (!pricesModal) return;
+    pricesModal.classList.remove("open");
+    document.body.style.overflow = "";
+    setTimeout(() => { pricesModal.hidden = true; }, 320);
+  }
+  $$("[data-open-prices]").forEach(el => el.addEventListener("click", () => openPrices(el.dataset.openPrices)));
+  $$("[data-close-prices]").forEach(el => el.addEventListener("click", closePrices));
+  document.addEventListener("keydown", e => { if (e.key === "Escape") closePrices(); });
+  // «Заказать» из прайса — закрываем модалку и уходим к форме
+  $$(".price-order").forEach(a => a.addEventListener("click", () => { pricesModal && pricesModal.classList.remove("open"); closePrices(); }));
 
   /* ---------- Before/After slider ---------- */
   $$(".ba-slider").forEach(box => {

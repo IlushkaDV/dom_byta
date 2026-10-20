@@ -10,14 +10,14 @@
   {% endif %}
   <div class="hero-overlay"></div>
   <div class="container hero-content">
-    <span class="hero-kicker reveal">{{ s.hero_kicker }}</span>
+    {% if s.hero_kicker %}<span class="hero-kicker reveal">{{ s.hero_kicker }}</span>{% endif %}
     <h1 class="hero-title">
       <span class="line"><span>{{ s.hero_title }}</span></span>
     </h1>
     <p class="hero-sub reveal reveal-d2">{{ s.hero_subtitle }}</p>
     <div class="hero-actions reveal reveal-d3">
       <a href="#order" class="btn btn-primary magnetic">Рассчитать стоимость по фото</a>
-      <a href="#services" class="btn btn-ghost">Услуги и цены</a>
+      <a href="#directions" class="btn btn-ghost">Услуги и цены</a>
     </div>
   </div>
   <a href="#about" class="scroll-hint" aria-label="Листайте вниз"><i></i></a>
@@ -68,7 +68,7 @@
     <h2 class="section-title center reveal">Четыре направления ателье</h2>
     <div class="dir-list">
       {% for d in directions %}
-      <a href="#services" class="dir-item reveal" data-delay="{{ loop.index0 * 90 }}" data-goto-tab="{{ d.tab }}">
+      <button type="button" class="dir-item reveal" data-delay="{{ loop.index0 * 90 }}" data-open-prices="{{ d.tab }}">
         <div class="dir-num">{{ '%02d' % (loop.index) }}</div>
         <div class="dir-icon" aria-hidden="true">{{ d.icon }}</div>
         <div class="dir-body">
@@ -78,20 +78,22 @@
         <span class="dir-cta">Смотреть цены
           <svg width="34" height="12" viewBox="0 0 34 12" fill="none"><path d="M0 6h30M25 1l5 5-5 5" stroke="currentColor" stroke-width="1.6"/></svg>
         </span>
-      </a>
+      </button>
       {% endfor %}
     </div>
   </div>
 </section>
 
-<!-- ===== 4. ЦЕНЫ — ВКЛАДКИ ПО НАПРАВЛЕНИЯМ ===== -->
-<section class="section section-cream services" id="services">
-  <div class="container">
-    <span class="section-kicker center reveal">Прайс-лист</span>
-    <h2 class="section-title center reveal">Цены на основные услуги</h2>
-    <p class="section-note reveal">Цены указаны «от» — точную стоимость мастер назовёт после осмотра изделия.</p>
+<!-- ===== 4. ЦЕНЫ — ВСПЛЫВАЮЩЕЕ ОКНО (открывается кнопкой «Смотреть цены») ===== -->
+<div class="prices-modal" id="pricesModal" role="dialog" aria-modal="true" aria-label="Прайс-лист" hidden>
+  <div class="prices-modal-backdrop" data-close-prices></div>
+  <div class="prices-modal-panel">
+    <button type="button" class="prices-modal-close" data-close-prices aria-label="Закрыть">×</button>
+    <span class="section-kicker">Прайс-лист</span>
+    <h2 class="prices-modal-title">Цены на основные услуги</h2>
+    <p class="section-note">Цены указаны «от» — точную стоимость мастер назовёт после осмотра изделия.</p>
 
-    <div class="tabs reveal" role="tablist">
+    <div class="tabs" role="tablist">
       {% for t in price_tabs %}
       <button class="tab {% if loop.first %}active{% endif %}" data-tab="tab-{{ t.dir.tab }}" id="tabbtn-{{ t.dir.tab }}">{{ t.dir.title }}</button>
       {% endfor %}
@@ -115,12 +117,12 @@
     </div>
     {% endfor %}
 
-    <div class="prices-note reveal">
+    <div class="prices-note">
       {% if s.prices_note_1 %}<p>{{ s.prices_note_1 }}</p>{% endif %}
       {% if s.prices_note_2 %}<p>{{ s.prices_note_2 }}</p>{% endif %}
     </div>
   </div>
-</section>
+</div>
 
 <!-- ===== 5. ПРОЗРАЧНЫЕ УСЛОВИЯ И НАДБАВКИ ===== -->
 <section class="section advantages" id="advantages">
@@ -200,17 +202,19 @@
   </div>
 </section>
 
-<!-- ===== 7. СХЕМА БЕЗОПАСНОЙ РАБОТЫ ===== -->
+<!-- ===== 7. СХЕМА БЕЗОПАСНОЙ РАБОТЫ (вертикальная строчка) ===== -->
 <section class="section section-cream steps" id="steps">
   <div class="container">
     <span class="section-kicker center reveal">Как мы работаем</span>
     <h2 class="section-title center reveal">Схема безопасной работы</h2>
-    <div class="steps-track">
+    <div class="steps-line">
       {% for title, text in steps %}
-      <div class="step-card reveal" data-delay="{{ loop.index0 * 120 }}">
-        <div class="step-num">{{ loop.index }}</div>
-        <h3>{{ title }}</h3>
-        <p>{{ text }}</p>
+      <div class="step-item reveal {% if loop.index0 % 2 == 1 %}step-right{% endif %}" data-delay="{{ loop.index0 * 120 }}">
+        <div class="step-node"><span>{{ loop.index }}</span></div>
+        <div class="step-body">
+          <h3>{{ title }}</h3>
+          <p>{{ text }}</p>
+        </div>
       </div>
       {% endfor %}
     </div>
@@ -250,10 +254,10 @@
       <h2 class="section-title reveal">Запишитесь на консультацию<br>или пришлите фото для расчёта</h2>
       <p class="reveal">Выберите удобное время для визита к мастеру или прикрепите фото изделия для оценки стоимости онлайн. Мы перезвоним в рабочее время в течение 15 минут.</p>
       <ul class="order-steps">
-        <li class="reveal"><b>01</b><span>Заявка на сайте или по телефону</span></li>
-        <li class="reveal"><b>02</b><span>Осмотр изделия и снятие мерок на 6 этаже</span></li>
-        <li class="reveal"><b>03</b><span>Расчёт стоимости и точных сроков</span></li>
-        <li class="reveal"><b>04</b><span>Пошив / ремонт и выдача готового изделия</span></li>
+        <li class="reveal"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg><span>Заявка на сайте или по телефону</span></li>
+        <li class="reveal"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg><span>Осмотр изделия и снятие мерок на 6 этаже</span></li>
+        <li class="reveal"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg><span>Расчёт стоимости и точных сроков</span></li>
+        <li class="reveal"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg><span>Пошив / ремонт и выдача готового изделия</span></li>
       </ul>
     </div>
     <form class="order-form reveal" method="post" action="/order" id="orderForm" enctype="multipart/form-data">
