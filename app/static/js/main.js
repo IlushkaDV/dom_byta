@@ -253,6 +253,66 @@
     addEventListener("scroll", updateThread, { passive: true });
     updateThread();
   }
+
+  /* ---- Нить через всю страницу: игла в шапке, нить шьется вниз при прокрутке ---- */
+  const pageThreadSvg = document.querySelector(".page-thread");
+  const pageThreadPath = document.getElementById("pageThreadPath");
+  const pageThreadNeedle = document.getElementById("pageThreadNeedle");
+  if (pageThreadSvg && pageThreadPath) {
+    const HEADER_H = 84, MARGIN_R = 36, WAVE_AMP = 26, WAVE_STEP = 90;
+    let maxScroll = 1, raf = null, x0 = 0, yStart = 0, yEnd = 0;
+
+    function setup() {
+      const h = document.documentElement.scrollHeight;
+      pageThreadSvg.setAttribute("width", "100%");
+      pageThreadSvg.setAttribute("height", String(h));
+      pageThreadSvg.setAttribute("viewBox", `0 0 ${innerWidth} ${h}`);
+      x0 = Math.max(innerWidth - MARGIN_R, innerWidth * .5 + 120);
+      yStart = HEADER_H + 10;
+      yEnd = Math.max(yStart + 40, h - 40);
+      maxScroll = Math.max(h - innerHeight, 1);
+    }
+
+    // волнистая линия от yStart до yTo (зигзаг из квадратных кривых)
+    function wavePath(yTo) {
+      if (yTo <= yStart + 1) return "";
+      let d = `M${x0},${yStart}`;
+      let i = 0;
+      for (let y = yStart; y < yTo; y += WAVE_STEP, i++) {
+        const ny = Math.min(y + WAVE_STEP, yTo);
+        const dir = i % 2 === 0 ? 1 : -1;
+        d += ` Q${(x0 + dir * WAVE_AMP).toFixed(1)},${((y + ny) / 2).toFixed(1)} ${x0},${ny.toFixed(1)}`;
+      }
+      return d;
+    }
+
+    function updatePageThread() {
+      raf = null;
+      const p = Math.min(1, Math.max(0, scrollY / maxScroll));
+      const yCur = yStart + (yEnd - yStart) * p;
+      const d = wavePath(yCur);
+      if (d) {
+        pageThreadPath.setAttribute("d", d);
+        pageThreadPath.style.visibility = "visible";
+      } else {
+        pageThreadPath.removeAttribute("d");
+        pageThreadPath.style.visibility = "hidden";
+      }
+      if (pageThreadNeedle) {
+        pageThreadNeedle.setAttribute("transform", `translate(${x0},${yCur.toFixed(1)})`);
+        pageThreadNeedle.style.opacity = p > .002 ? "1" : "0";
+      }
+    }
+
+    const scheduleUpdate = () => { if (!raf) raf = requestAnimationFrame(updatePageThread); };
+    setup();
+    updatePageThread();
+    addEventListener("scroll", scheduleUpdate, { passive: true });
+    addEventListener("resize", () => { setup(); updatePageThread(); });
+    // пересчёт после загрузки изображений/шрифтов (высота страницы может измениться)
+    addEventListener("load", () => { setup(); updatePageThread(); });
+    setTimeout(() => { setup(); updatePageThread(); }, 1200);
+  }
 })();
 
 /* ---------- Before/After слайдер в галерее ---------- */
