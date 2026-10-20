@@ -115,6 +115,25 @@
       </div>
     </div>
     {% endfor %}
+
+    <div class="prices-terms reveal">
+      <div class="prices-terms-notes">
+        {% if s.prices_note_1 %}<p>{{ s.prices_note_1 }}</p>{% endif %}
+        {% if s.prices_note_2 %}<p>{{ s.prices_note_2 }}</p>{% endif %}
+      </div>
+      {% set surcharges = [s.prices_surcharge_1, s.prices_surcharge_2, s.prices_surcharge_3,
+                           s.prices_surcharge_4, s.prices_surcharge_5, s.prices_surcharge_6,
+                           s.prices_surcharge_7, s.prices_surcharge_8, s.prices_surcharge_9]
+                         | select | list %}
+      {% if surcharges %}
+      <div class="prices-terms-box">
+        <h4>Надбавки и условия</h4>
+        <ul>
+          {% for line in surcharges %}<li>{{ line }}</li>{% endfor %}
+        </ul>
+      </div>
+      {% endif %}
+    </div>
   </div>
 </section>
 
