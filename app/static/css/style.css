@@ -273,6 +273,60 @@ img.manager-photo {
 .manager-phone { margin-left: auto; font-weight: 800; white-space: nowrap; }
 .manager-phone:hover { color: var(--gold); }
 
+/* ---------- Directions (список ателье вместо карточек) ---------- */
+.directions .section-title { margin-bottom: 44px; }
+.dir-list {
+  max-width: 900px; margin-inline: auto;
+  border-top: 1px solid var(--line);
+}
+.dir-item {
+  display: grid;
+  grid-template-columns: 64px 56px 1fr auto;
+  align-items: center;
+  gap: 26px;
+  padding: 30px 18px;
+  border-bottom: 1px solid var(--line);
+  position: relative;
+  transition: background .45s var(--ease), padding-left .45s var(--ease);
+}
+/* золотая строчка слева при наведении */
+.dir-item::before {
+  content: ""; position: absolute; left: 0; top: 14%; bottom: 14%; width: 0;
+  border-left: 2px dashed rgba(185,138,68,.55);
+  opacity: 0; transition: opacity .4s;
+}
+.dir-item:hover { background: var(--paper); padding-left: 30px; }
+.dir-item:hover::before { opacity: 1; }
+.dir-num {
+  font-family: var(--font-display); font-style: italic;
+  font-size: 30px; color: var(--taupe); line-height: 1;
+  transition: color .4s;
+}
+.dir-item:hover .dir-num { color: var(--gold-dark); }
+.dir-icon {
+  width: 56px; height: 56px; border-radius: 50%;
+  display: grid; place-items: center; font-size: 24px;
+  border: 1px solid var(--line); background: var(--paper);
+  transition: transform .5s var(--ease), border-color .4s, background .4s;
+}
+.dir-item:hover .dir-icon {
+  transform: rotate(-8deg) scale(1.06);
+  border-color: rgba(185,138,68,.45);
+  background: linear-gradient(135deg, rgba(185,138,68,.14), rgba(185,138,68,.04));
+}
+.dir-body h3 {
+  font-family: var(--font-display); font-weight: 600;
+  font-size: clamp(21px, 2.4vw, 27px); line-height: 1.2; margin-bottom: 4px;
+}
+.dir-body p { color: var(--taupe); font-size: 14.5px; line-height: 1.55; }
+.dir-cta {
+  display: inline-flex; align-items: center; gap: 10px;
+  font-size: 12.5px; font-weight: 800; letter-spacing: .14em; text-transform: uppercase;
+  color: var(--gold-dark); white-space: nowrap;
+}
+.dir-cta svg { transition: transform .4s var(--ease); }
+.dir-item:hover .dir-cta svg { transform: translateX(7px); }
+
 /* ---------- Advantages ---------- */
 .adv-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 22px; margin-top: 44px; }
 .adv-card {
@@ -482,6 +536,8 @@ img.manager-photo {
   .nav, .header-contacts { display: none; }
   .burger { display: flex; margin-left: auto; }
   .adv-grid, .gallery-grid { grid-template-columns: repeat(2, 1fr); }
+  .dir-item { grid-template-columns: 46px 50px 1fr auto; gap: 18px; padding: 24px 14px; }
+  .dir-cta { font-size: 11px; letter-spacing: .1em; }
   .review-card { flex-basis: calc((100% - 22px) / 2); }
   .about-grid, .order-grid, .contacts-grid { grid-template-columns: 1fr; }
   .order-form { position: static; }
@@ -490,6 +546,9 @@ img.manager-photo {
 @media (max-width: 640px) {
   .section { padding: 76px 0; }
   .adv-grid, .gallery-grid, .contacts-cards { grid-template-columns: 1fr; }
+  .dir-item { grid-template-columns: 40px 1fr; gap: 12px 14px; padding: 20px 8px; }
+  .dir-icon { display: none; }
+  .dir-cta { grid-column: 2; justify-content: flex-start; }
   .review-card { flex-basis: 100%; }
   .price-row { flex-wrap: wrap; }
   .price-dots { display: none; }

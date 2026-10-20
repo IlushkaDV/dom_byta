@@ -66,14 +66,18 @@
   <div class="container">
     <span class="section-kicker center reveal">Что мы делаем</span>
     <h2 class="section-title center reveal">Четыре направления ателье</h2>
-    <div class="dir-grid">
+    <div class="dir-list">
       {% for d in directions %}
-      <a href="#services" class="dir-card tilt reveal" data-delay="{{ loop.index0 % 4 * 100 }}" data-goto-tab="{{ d.tab }}">
+      <a href="#services" class="dir-item reveal" data-delay="{{ loop.index0 * 90 }}" data-goto-tab="{{ d.tab }}">
         <div class="dir-num">{{ '%02d' % (loop.index) }}</div>
-        <div class="dir-icon">{{ d.icon }}</div>
-        <h3>{{ d.title }}</h3>
-        <p>{{ d.text }}</p>
-        <span class="dir-link">Смотреть цены →</span>
+        <div class="dir-icon" aria-hidden="true">{{ d.icon }}</div>
+        <div class="dir-body">
+          <h3>{{ d.title }}</h3>
+          <p>{{ d.text }}</p>
+        </div>
+        <span class="dir-cta">Смотреть цены
+          <svg width="34" height="12" viewBox="0 0 34 12" fill="none"><path d="M0 6h30M25 1l5 5-5 5" stroke="currentColor" stroke-width="1.6"/></svg>
+        </span>
       </a>
       {% endfor %}
     </div>
