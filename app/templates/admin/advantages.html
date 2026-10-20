@@ -1,0 +1,74 @@
+{% extends "admin/base_admin.html" %}
+{% set page = 'advantages' %}
+{% block heading %}Условия и надбавки{% endblock %}
+{% block content %}
+
+<div class="panel">
+  <div class="panel-head">
+    <h2>Карточки «Прозрачные условия» ({{ advantages | length }})</h2>
+    <button class="btn btn-gold btn-sm" data-open="advModal" onclick="resetAdv()">＋ Добавить карточку</button>
+  </div>
+  <table>
+    <thead><tr><th>Иконка</th><th>Название</th><th>Текст</th><th>Действия</th></tr></thead>
+    <tbody>
+      {% for a in advantages %}
+      <tr>
+        <td style="font-size:20px">{{ a.icon }}</td>
+        <td><b>{{ a.title }}</b></td>
+        <td style="max-width:420px">{{ a.text }}</td>
+        <td style="white-space:nowrap">
+          <button class="btn btn-sm" data-open="advModal" data-edit='{{ a | tojson }}'>✏️ Изменить</button>
+          <form method="post" action="/admin/advantages/{{ a.id }}/delete" data-confirm="Удалить карточку?" style="display:inline">
+            <button class="btn btn-danger" type="submit">Удалить</button>
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<div class="panel">
+  <div class="panel-head"><h2>Тексты примечаний к ценам</h2></div>
+  <p class="muted" style="margin-top:-6px">Эти тексты показываются под блоком цен на сайте.</p>
+  <form method="post" action="/admin/advantages/text">
+    {% for key, label in text_fields %}
+    <div class="field" style="margin-bottom:14px">
+      <label>{{ label }}</label>
+      <textarea name="{{ key }}" rows="2" placeholder="{{ label }}">{{ s.get(key, '') }}</textarea>
+    </div>
+    {% endfor %}
+    <div class="form-actions">
+      <button class="btn btn-gold" type="submit">Сохранить тексты</button>
+    </div>
+  </form>
+</div>
+
+<div class="modal-backdrop" id="advModal">
+  <div class="modal">
+    <button type="button" class="modal-close">×</button>
+    <h2>Карточка условия</h2>
+    <form method="post" action="/admin/advantages/save" id="advForm">
+      <input type="hidden" name="id" value="0">
+      <div class="form-grid">
+        <div class="field"><label>Иконка (символ эмодзи)</label><input type="text" name="icon" placeholder="⚡"></div>
+        <div class="field"><label>Название *</label><input type="text" name="title" required placeholder="Срочный ремонт за 1 день"></div>
+        <div class="field full"><label>Текст</label><textarea name="text" placeholder="Описание условия…"></textarea></div>
+      </div>
+      <div class="form-actions">
+        <button class="btn btn-gold" type="submit">Сохранить</button>
+        <button class="btn" type="button" onclick="this.closest('.modal-backdrop').classList.remove('open')">Отмена</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+function resetAdv() {
+  const f = document.getElementById('advForm');
+  f.querySelector('[name=id]').value = 0;
+  f.reset();
+}
+</script>
+
+{% endblock %}

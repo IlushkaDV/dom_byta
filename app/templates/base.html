@@ -7,51 +7,38 @@
   <meta name="description" content="{{ s.tagline }}">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Manrope:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧵</text></svg>">
-  <link rel="stylesheet" href="/static/css/style.css?v=20261020b">
+  <link rel="stylesheet" href="/static/css/style.css?v=20261020c">
 </head>
 <body>
 
 <div class="preloader" id="preloader"><span class="preloader-mark">DB</span><i></i></div>
 
-<!-- ===== Масштабная нить: игла следует за курсором, нить тянется через весь экран ===== -->
-<svg class="page-thread" aria-hidden="true">
-  <path id="pageThreadPath" class="thread-stitch"/>
-  <g id="pageThreadNeedle" class="thread-needle">
-    <circle cx="0" cy="-14" r="2.6"/>
-    <path d="M0 -11v15l-1.7 4h3.4L0 4"/>
-    <path d="M0 -11c-3.6 3-5 6.5-4.3 10.2" stroke="#d9b87c" stroke-width="1.3" stroke-dasharray="2 3"/>
-  </g>
-</svg>
-
 <header class="header" id="header">
   <div class="container header-inner">
     <a href="/" class="logo">
       <span class="logo-mono">DB</span>
-      <span class="logo-text"><b>Меховое ателье</b><small>Дом Быта · Хабаровск</small></span>
+      <span class="logo-text"><b>Ателье</b><small>Дом Быта · Хабаровск</small></span>
     </a>
     <nav class="nav" id="nav">
       <a href="#about">О нас</a>
-      <a href="#advantages">Преимущества</a>
       <a href="#services">Услуги и цены</a>
-      <a href="#gallery">Наши работы</a>
-      <a href="#reviews">Отзывы</a>
-      <a href="#order" class="nav-cta">Оставить заявку</a>
+      <a href="#gallery">Галерея</a>
+      <a href="#contacts">Контакты</a>
     </nav>
     <div class="header-contacts">
-      <a href="tel:{{ s.phone | replace('(','')|replace(')','')|replace('-','')|replace(' ','') }}" class="header-phone">{{ s.phone }}</a>
-      <span class="header-hours">{{ s.hours_week }}</span>
+      <a href="tel:{{ s.phone | replace('(','')|replace(')','')|replace('-','')|replace(' ','') }}" class="btn btn-primary btn-phone">{{ s.phone }}</a>
     </div>
     <button class="burger" id="burger" aria-label="Меню"><i></i><i></i><i></i></button>
   </div>
   <div class="mobile-menu" id="mobileMenu">
     <a href="#about">О нас</a>
-    <a href="#advantages">Преимущества</a>
     <a href="#services">Услуги и цены</a>
-    <a href="#gallery">Наши работы</a>
-    <a href="#reviews">Отзывы</a>
-    <a href="#order">Оставить заявку</a>
+    <a href="#gallery">Галерея</a>
+    <a href="#steps">Как мы работаем</a>
+    <a href="#order">Записаться</a>
+    <a href="#contacts">Контакты</a>
     <div class="mobile-menu-contacts">{{ s.phone }}<br>{{ s.address }}</div>
   </div>
 </header>
@@ -86,7 +73,7 @@
     </div>
   </div>
   <div class="container footer-bottom">
-    <span>© {{ year | default(2026) }} Меховое ателье «Дом Быта», Хабаровск</span>
+    <span>© {{ year | default(2026) }} Ателье в ТЦ «Дом Быта», Хабаровск</span>
     <a href="/admin" class="footer-admin">Панель управления</a>
   </div>
 

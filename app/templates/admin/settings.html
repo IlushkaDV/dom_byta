@@ -9,7 +9,7 @@
   <form method="post" action="/admin/settings" enctype="multipart/form-data">
     <div class="form-grid">
       {% for key, label in fields %}
-      <div class="field {% if key in ('about_text','hero_subtitle') or key in image_keys %}full{% endif %}">
+      <div class="field {% if key in ('about_text','hero_subtitle','manager_quote','hero_title','hero_kicker') or key in image_keys %}full{% endif %}">
         <label>{{ label }}</label>
         {% if key in image_keys %}
           {% if s.get(key) %}
@@ -25,8 +25,8 @@
           <input type="file" name="{{ key }}" accept="image/*">
         {% elif key in ('about_text',) %}
           <textarea name="{{ key }}" rows="8">{{ s.get(key, '') }}</textarea>
-        {% elif key in ('hero_subtitle',) %}
-          <textarea name="{{ key }}" rows="3">{{ s.get(key, '') }}</textarea>
+        {% elif key in ('hero_subtitle','manager_quote') %}
+          <textarea name="{{ key }}" rows="4">{{ s.get(key, '') }}</textarea>
         {% else %}
           <input type="text" name="{{ key }}" value="{{ s.get(key, '') }}">
         {% endif %}

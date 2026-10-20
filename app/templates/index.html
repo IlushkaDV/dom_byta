@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% block content %}
 
-<!-- ===== HERO ===== -->
+<!-- ===== 1. ГЛАВНЫЙ ЭКРАН ===== -->
 <section class="hero">
   {% if s.hero_image %}
   <div class="hero-bg" data-parallax="0.3" style="background-image:url('{{ s.hero_image }}')"></div>
@@ -10,61 +10,50 @@
   {% endif %}
   <div class="hero-overlay"></div>
   <div class="container hero-content">
-    <span class="hero-badge reveal">ТЦ «Дом Быта» · 6 этаж · Хабаровск</span>
+    <span class="hero-kicker reveal">{{ s.hero_kicker }}</span>
     <h1 class="hero-title">
       <span class="line"><span>{{ s.hero_title }}</span></span>
-      <span class="line accent"><span>из меха с характером</span></span>
     </h1>
     <p class="hero-sub reveal reveal-d2">{{ s.hero_subtitle }}</p>
     <div class="hero-actions reveal reveal-d3">
-      <a href="#order" class="btn btn-primary magnetic">Оставить заявку</a>
+      <a href="#order" class="btn btn-primary magnetic">Рассчитать стоимость по фото</a>
       <a href="#services" class="btn btn-ghost">Услуги и цены</a>
-    </div>
-    <div class="hero-stats reveal reveal-d4">
-      <div><b class="counter" data-count="30">0</b><span>лет опыта мастеров</span></div>
-      <div><b class="counter" data-count="5000">0</b><span>изделий пошито</span></div>
-      <div><b><i class="counter" data-count="100">0</i>%</b><span>гарантия качества</span></div>
     </div>
   </div>
   <a href="#about" class="scroll-hint" aria-label="Листайте вниз"><i></i></a>
-  <div class="marquee" aria-hidden="true">
-    <div class="marquee-track">
-      {% for i in range(2) %}
-      <span>Пошив шуб<i>✦</i>Реставрация меха<i>✦</i>Пальто на заказ<i>✦</i>Подгонка по фигуре<i>✦</i>Замена молний<i>✦</i>Вышивка и штопка<i>✦</i>Индивидуальные лекала<i>✦</i></span>
-      {% endfor %}
-    </div>
-  </div>
 </section>
 
-<!-- ===== О НАС ===== -->
-<section class="section about" id="about">
+<!-- ===== 2. ЛИЦО АТЕЛЬЕ — ЗАВЕДУЮЩАЯ ===== -->
+<section class="section section-cream about" id="about">
   <div class="container about-grid">
     <div class="about-media reveal">
       <div class="about-frame">
         {% if s.manager_photo %}
         <img class="about-img about-photo" src="{{ s.manager_photo }}" alt="{{ s.manager_name }} — {{ s.manager_role }}">
         {% else %}
-        <div class="about-img" role="img" aria-label="Ателье"></div>
+        <div class="about-img about-placeholder" role="img" aria-label="Фото заведующей">
+          <svg viewBox="0 0 120 120" width="96" height="96" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round">
+            <circle cx="60" cy="44" r="20"/>
+            <path d="M22 104c6-22 20-32 38-32s32 10 38 32"/>
+          </svg>
+          <span>Фото заведующей<br><small>загрузите в админке → «Настройки сайта»</small></span>
+        </div>
         {% endif %}
         <div class="about-year"><b>с 1998</b><span>года в центре Хабаровска</span></div>
       </div>
     </div>
     <div class="about-body">
-      <span class="section-kicker reveal">О нас</span>
-      <h2 class="section-title reveal">Мастерская, где рождается <em>ваш стиль</em></h2>
-      {% for para in s.about_text.split('\n\n') %}
-      <p class="reveal">{{ para }}</p>
-      {% endfor %}
-      <div class="manager-card reveal">
-        {% if s.manager_photo %}
-        <img class="manager-avatar manager-photo" src="{{ s.manager_photo }}" alt="{{ s.manager_name }}">
-        {% else %}
-        <div class="manager-avatar">{{ s.manager_name.split(' ')[0][0] }}{{ s.manager_name.split(' ')[1][0] if ' ' in s.manager_name else '' }}</div>
-        {% endif %}
+      <span class="section-kicker reveal">Лицо ателье</span>
+      <h2 class="section-title reveal">{{ s.manager_title }}</h2>
+      <div class="manager-quote reveal">
+        {% for para in s.manager_quote.split('\n') %}
+        <p>{{ para }}</p>
+        {% endfor %}
+      </div>
+      <div class="manager-sign reveal">
         <div>
           <b>{{ s.manager_name }}</b>
           <span>{{ s.manager_role }}</span>
-          <small>{{ s.manager_note }}</small>
         </div>
         <a href="tel:{{ s.phone | replace('(','')|replace(')','')|replace('-','')|replace(' ','') }}" class="manager-phone">{{ s.phone }}</a>
       </div>
@@ -72,42 +61,43 @@
   </div>
 </section>
 
-<!-- ===== ПРЕИМУЩЕСТВА ===== -->
-<section class="section advantages" id="advantages">
+<!-- ===== 3. НАПРАВЛЕНИЯ РАБОТЫ (плитка 4 категорий) ===== -->
+<section class="section directions" id="directions">
   <div class="container">
-    <span class="section-kicker center reveal">Почему мы</span>
-    <h2 class="section-title center reveal">Преимущества нашего ателье</h2>
-    <div class="adv-grid">
-      {% for a in advantages %}
-      <article class="adv-card tilt reveal" data-delay="{{ loop.index0 % 3 * 100 }}">
-        <div class="adv-stitch" aria-hidden="true"></div>
-        <div class="adv-icon">{{ a.icon }}</div>
-        <h3>{{ a.title }}</h3>
-        <p>{{ a.text }}</p>
-      </article>
+    <span class="section-kicker center reveal">Что мы делаем</span>
+    <h2 class="section-title center reveal">Четыре направления ателье</h2>
+    <div class="dir-grid">
+      {% for d in directions %}
+      <a href="#services" class="dir-card tilt reveal" data-delay="{{ loop.index0 % 4 * 100 }}" data-goto-tab="{{ d.tab }}">
+        <div class="dir-num">{{ '%02d' % (loop.index) }}</div>
+        <div class="dir-icon">{{ d.icon }}</div>
+        <h3>{{ d.title }}</h3>
+        <p>{{ d.text }}</p>
+        <span class="dir-link">Смотреть цены →</span>
+      </a>
       {% endfor %}
     </div>
   </div>
 </section>
 
-<!-- ===== УСЛУГИ ===== -->
-<section class="section services" id="services">
+<!-- ===== 4. ЦЕНЫ — ВКЛАДКИ ПО НАПРАВЛЕНИЯМ ===== -->
+<section class="section section-cream services" id="services">
   <div class="container">
-    <span class="section-kicker center reveal">Цены</span>
-    <h2 class="section-title center reveal">Услуги и стоимость</h2>
-    <p class="section-note reveal">Объективная и разумная стоимость — цены на услуги ателье оптимальные в Хабаровске. Точную цену мастер назовёт после осмотра изделия.</p>
+    <span class="section-kicker center reveal">Прайс-лист</span>
+    <h2 class="section-title center reveal">Цены на основные услуги</h2>
+    <p class="section-note reveal">Цены указаны «от» — точную стоимость мастер назовёт после осмотра изделия.</p>
 
     <div class="tabs reveal" role="tablist">
-      {% for cat, items in categories.items() %}
-      <button class="tab {% if loop.first %}active{% endif %}" data-tab="cat-{{ loop.index0 }}">{{ cat }}</button>
+      {% for t in price_tabs %}
+      <button class="tab {% if loop.first %}active{% endif %}" data-tab="tab-{{ t.dir.tab }}" id="tabbtn-{{ t.dir.tab }}">{{ t.dir.title }}</button>
       {% endfor %}
     </div>
 
-    {% for cat, items in categories.items() %}
-    <div class="tab-panel {% if not loop.first %}hidden{% endif %}" id="cat-{{ loop.index0 }}">
+    {% for t in price_tabs %}
+    <div class="tab-panel {% if not loop.first %}hidden{% endif %}" id="tab-{{ t.dir.tab }}">
       <div class="price-list">
-        {% for srv in items %}
-        <div class="price-row reveal">
+        {% for srv in t['items'] %}
+        <div class="price-row">
           <div class="price-info">
             <h3>{{ srv.title }}</h3>
             {% if srv.description %}<p>{{ srv.description }}</p>{% endif %}
@@ -121,32 +111,50 @@
     </div>
     {% endfor %}
 
-    <div class="prices-terms reveal">
-      <div class="prices-terms-notes">
-        {% if s.prices_note_1 %}<p>{{ s.prices_note_1 }}</p>{% endif %}
-        {% if s.prices_note_2 %}<p>{{ s.prices_note_2 }}</p>{% endif %}
-      </div>
-      {% set surcharges = [s.prices_surcharge_1, s.prices_surcharge_2, s.prices_surcharge_3,
-                           s.prices_surcharge_4, s.prices_surcharge_5, s.prices_surcharge_6,
-                           s.prices_surcharge_7, s.prices_surcharge_8, s.prices_surcharge_9]
-                         | select | list %}
-      {% if surcharges %}
-      <div class="prices-terms-box">
-        <h4>Надбавки и условия</h4>
-        <ul>
-          {% for line in surcharges %}<li>{{ line }}</li>{% endfor %}
-        </ul>
-      </div>
-      {% endif %}
+    <div class="prices-note reveal">
+      {% if s.prices_note_1 %}<p>{{ s.prices_note_1 }}</p>{% endif %}
+      {% if s.prices_note_2 %}<p>{{ s.prices_note_2 }}</p>{% endif %}
     </div>
   </div>
 </section>
 
-<!-- ===== ГАЛЕРЕЯ ===== -->
+<!-- ===== 5. ПРОЗРАЧНЫЕ УСЛОВИЯ И НАДБАВКИ ===== -->
+<section class="section advantages" id="advantages">
+  <div class="container">
+    <span class="section-kicker center reveal">Без сюрпризов</span>
+    <h2 class="section-title center reveal">Прозрачные условия работы</h2>
+    <div class="adv-grid">
+      {% for a in advantages %}
+      <article class="adv-card tilt reveal" data-delay="{{ loop.index0 % 3 * 100 }}">
+        <div class="adv-stitch" aria-hidden="true"></div>
+        <div class="adv-icon">{{ a.icon }}</div>
+        <h3>{{ a.title }}</h3>
+        <p>{{ a.text }}</p>
+      </article>
+      {% endfor %}
+    </div>
+
+    {% set surcharges = [s.prices_surcharge_1, s.prices_surcharge_2, s.prices_surcharge_3,
+                         s.prices_surcharge_4, s.prices_surcharge_5, s.prices_surcharge_6,
+                         s.prices_surcharge_7, s.prices_surcharge_8, s.prices_surcharge_9]
+                       | select | list %}
+    {% if surcharges %}
+    <div class="prices-terms-box reveal">
+      <h4>Полный прейскурант надбавок</h4>
+      <ul>
+        {% for line in surcharges %}<li>{{ line }}</li>{% endfor %}
+      </ul>
+    </div>
+    {% endif %}
+  </div>
+</section>
+
+<!-- ===== 6. ГАЛЕРЕЯ ДО/ПОСЛЕ ===== -->
 <section class="section gallery" id="gallery">
   <div class="container">
     <span class="section-kicker center reveal">Портфолио</span>
-    <h2 class="section-title center reveal">Фото наших работ</h2>
+    <h2 class="section-title center reveal">Наши работы: до / после</h2>
+    <p class="section-note reveal">Перетащите ползунок на карточке, чтобы сравнить, что было и что стало.</p>
     <div class="gallery-grid">
       {% for g in gallery %}
       <article class="work-card tilt reveal" data-delay="{{ loop.index0 % 3 * 100 }}">
@@ -163,11 +171,9 @@
           {% else %}
           <div class="work-placeholder" aria-hidden="true">
             <svg viewBox="0 0 120 96" width="110" height="88" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-              <!-- фоторамка -->
               <rect x="14" y="10" width="92" height="76" rx="6"/>
               <circle cx="38" cy="32" r="8"/>
               <path d="M14 66l26-22 20 16 16-12 30 24"/>
-              <!-- иголка с ниткой поверх -->
               <path d="M84 14c6 8 10 18 8 30-1 6-5 10-9 12" stroke-dasharray="3 5"/>
               <path d="M96 8l-14 34" stroke-width="2.6"/>
               <circle cx="97" cy="6" r="2.6"/>
@@ -185,6 +191,23 @@
       </article>
       {% else %}
       <p class="section-note">Работы скоро появятся здесь.</p>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<!-- ===== 7. СХЕМА БЕЗОПАСНОЙ РАБОТЫ ===== -->
+<section class="section section-cream steps" id="steps">
+  <div class="container">
+    <span class="section-kicker center reveal">Как мы работаем</span>
+    <h2 class="section-title center reveal">Схема безопасной работы</h2>
+    <div class="steps-track">
+      {% for title, text in steps %}
+      <div class="step-card reveal" data-delay="{{ loop.index0 * 120 }}">
+        <div class="step-num">{{ loop.index }}</div>
+        <h3>{{ title }}</h3>
+        <p>{{ text }}</p>
+      </div>
       {% endfor %}
     </div>
   </div>
@@ -215,13 +238,13 @@
 </section>
 {% endif %}
 
-<!-- ===== ЗАЯВКА ===== -->
+<!-- ===== 8. ОНЛАЙН-ЗАПИСЬ И РАСЧЁТ ===== -->
 <section class="section order" id="order">
   <div class="container order-grid">
     <div class="order-info">
-      <span class="section-kicker reveal">Заявка</span>
-      <h2 class="section-title reveal">Оставьте заявку —<br>мы перезвоним за 15 минут</h2>
-      <p class="reveal">Расскажите, что нужно сделать с вашим изделием, и мастер свяжется с вами в рабочее время, чтобы уточнить детали и стоимость.</p>
+      <span class="section-kicker reveal">Запись онлайн</span>
+      <h2 class="section-title reveal">Запишитесь на консультацию<br>или пришлите фото для расчёта</h2>
+      <p class="reveal">Выберите удобное время для визита к мастеру или прикрепите фото изделия для оценки стоимости онлайн. Мы перезвоним в рабочее время в течение 15 минут.</p>
       <ul class="order-steps">
         <li class="reveal"><b>01</b><span>Заявка на сайте или по телефону</span></li>
         <li class="reveal"><b>02</b><span>Осмотр изделия и снятие мерок на 6 этаже</span></li>
@@ -229,20 +252,37 @@
         <li class="reveal"><b>04</b><span>Пошив / ремонт и выдача готового изделия</span></li>
       </ul>
     </div>
-    <form class="order-form reveal" method="post" action="/order" id="orderForm">
-      <h3>Оставить заявку</h3>
+    <form class="order-form reveal" method="post" action="/order" id="orderForm" enctype="multipart/form-data">
+      <h3>Записаться на консультацию</h3>
       <label>Ваше имя *<input name="name" required placeholder="Как к вам обращаться"></label>
       <label>Телефон *<input name="phone" type="tel" required id="phoneInput" placeholder="+7 (___) ___-__-__"></label>
-      <label>E-mail<input name="email" type="email" placeholder="не обязательно"></label>
+      <div class="form-row">
+        <label>Дата визита<input name="visit_date" type="date" id="dateInput"></label>
+        <label>Время
+          <select name="visit_time" id="timeSelect">
+            <option value="">— не важно —</option>
+            {% for t in ['10:00','11:30','13:00','14:30','16:00','17:30','19:00'] %}
+            <option value="{{ t }}">{{ t }}</option>
+            {% endfor %}
+          </select>
+        </label>
+      </div>
       <label>Интересующая услуга
         <select name="service" id="serviceSelect">
           <option value="">— выберите —</option>
-          {% for srv in services %}<option value="{{ srv.title }}">{{ srv.title }}</option>{% endfor %}
+          {% for t in price_tabs %}{% for srv in t['items'] %}
+          <option value="{{ srv.title }}">{{ srv.title }}</option>
+          {% endfor %}{% endfor %}
           <option value="Другое">Другое</option>
         </select>
       </label>
+      <label class="form-file">
+        <input type="file" name="photo" id="photoInput" accept="image/*" hidden>
+        <span class="btn btn-file">📎 Прикрепить фото шубы / одежды</span>
+        <em id="photoName">не обязательно</em>
+      </label>
       <label>Комментарий<textarea name="message" rows="3" placeholder="Опишите задачу: что и из какого материала, сроки…"></textarea></label>
-      <button class="btn btn-primary btn-block" type="submit">Отправить заявку</button>
+      <button class="btn btn-primary btn-block" type="submit">Записаться на консультацию</button>
       <small class="form-note">Нажимая кнопку, вы соглашаетесь на обработку персональных данных.</small>
       {% if request.query_params.get('sent') == 'ok' %}
       <div class="form-success show">✔ Спасибо! Заявка отправлена — мы скоро свяжемся с вами.</div>
@@ -253,18 +293,18 @@
   </div>
 </section>
 
-<!-- ===== КОНТАКТЫ ===== -->
-<section class="section contacts" id="contacts">
+<!-- ===== 9. КОНТАКТЫ И КАРТА ===== -->
+<section class="section section-cream contacts" id="contacts">
   <div class="container contacts-grid">
     <div class="contacts-cards">
       <div class="contact-card reveal"><span class="section-kicker">Адрес</span><p>{{ s.address }}</p></div>
       <div class="contact-card reveal"><span class="section-kicker">Телефоны</span>
-        <p><a href="tel:#">{{ s.phone }}</a> — ателье<br><a href="tel:#">{{ s.phone_tc }}</a> — ТЦ «Дом Быта»</p></div>
+        <p><a href="tel:+74212327282">{{ s.phone }}</a> — ателье<br><a href="tel:+74212328410">{{ s.phone_tc }}</a> — администрация ТЦ</p></div>
       <div class="contact-card reveal"><span class="section-kicker">Время работы</span><p>{{ s.hours_week }}<br>{{ s.hours_weekend }}</p></div>
       <div class="contact-card reveal"><span class="section-kicker">Почта</span><p><a href="mailto:{{ s.email }}">{{ s.email }}</a></p></div>
     </div>
     <div class="map-frame reveal">
-      <iframe title="Карта" src="https://yandex.ru/map-widget/v1/?text=Хабаровск%20улица%20Шеронова%2092&z=16" loading="lazy"></iframe>
+      <iframe title="Карта — ТЦ Дом Быта, Шеронова 92" src="https://yandex.ru/map-widget/v1/?text=Хабаровск%20улица%20Шеронова%2092&z=16" loading="lazy"></iframe>
     </div>
   </div>
 </section>

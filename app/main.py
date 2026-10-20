@@ -68,13 +68,37 @@ def index(request: Request):
             "SELECT * FROM gallery_items ORDER BY id DESC LIMIT 6")]
         reviews = [dict(r) for r in conn.execute(
             "SELECT * FROM reviews WHERE is_public=1 ORDER BY created_at DESC LIMIT 6")]
-    categories = {}
+
+    # Четыре направления ателье -> вкладки с ценами. Каждая реальная категория
+    # прейскуранта попадает ровно в одну вкладку (без дублей).
+    from .db import DEFAULT_DIRECTIONS, DEFAULT_STEPS
+    groups = {
+        "meh": ["Пошив меха", "Пошив меха с перекроем", "Ремонт меха"],
+        "kozha": ["Пошив кожи", "Ремонт кожи и дублёнок"],
+        "poshiv": ["Пошив верхней одежды", "Пошив лёгкого платья"],
+        "remont": ["Ремонт верхней одежды", "Ремонт лёгкой одежды"],
+    }
+    by_cat: dict[str, list] = {}
     for srv in services:
-        categories.setdefault(srv["category"], []).append(srv)
+        by_cat.setdefault(srv["category"], []).append(srv)
+    used = {c for lst in groups.values() for c in lst}
+    leftover = [srv for cat, items in by_cat.items() if cat not in used for srv in items]
+    if leftover:
+        groups.setdefault("remont", [])
+        groups["remont"] = groups["remont"]  # существующие категории уже включены
+    price_tabs = []
+    for d in DEFAULT_DIRECTIONS:
+        items = [srv for cat in groups.get(d["tab"], []) for srv in by_cat.get(cat, [])]
+        if d["tab"] == "remont" and leftover:
+            items = items + leftover
+        if items:
+            price_tabs.append({"dir": d, "items": items})
+
     return templates.TemplateResponse(request, "index.html", context={
         "s": s, "services": services,
-        "categories": categories, "advantages": advantages,
-        "gallery": gallery, "reviews": reviews,
+        "advantages": advantages, "gallery": gallery, "reviews": reviews,
+        "directions": DEFAULT_DIRECTIONS, "steps": DEFAULT_STEPS,
+        "price_tabs": price_tabs,
     })
 
 
@@ -221,6 +245,56 @@ def admin_service_delete(service_id: int, admin: str = Depends(require_admin)):
     with db.db() as conn:
         conn.execute("DELETE FROM services WHERE id=?", (service_id,))
     return redirect("/admin/services")
+
+
+# ---------- админка: условия и надбавки (карточки + прейскурант) ----------
+
+@app.get("/admin/advantages", response_class=HTMLResponse)
+def admin_advantages(request: Request, admin: str = Depends(require_admin)):
+    s = db.get_all_settings()
+    with db.db() as conn:
+        rows = [dict(r) for r in conn.execute("SELECT * FROM advantages ORDER BY id")]
+    surcharge_keys = [(f"prices_surcharge_{i}", f"Надбавка {i}") for i in range(1, 10)]
+    note_keys = [("prices_note_1", "Примечание к ценам 1"), ("prices_note_2", "Примечание к ценам 2")]
+    return templates.TemplateResponse(request, "admin/advantages.html", context={
+        "admin": admin, "advantages": rows, "s": s,
+        "text_fields": note_keys + surcharge_keys,
+    })
+
+
+@app.post("/admin/advantages/save")
+def admin_advantage_save(
+    admin: str = Depends(require_admin),
+    id: int = Form(0), icon: str = Form(""), title: str = Form(...), text: str = Form(""),
+):
+    if not title.strip():
+        raise HTTPException(400, "Название обязательно")
+    with db.db() as conn:
+        if id:
+            conn.execute("UPDATE advantages SET icon=?, title=?, text=? WHERE id=?",
+                         (icon.strip(), title.strip(), text.strip(), id))
+        else:
+            conn.execute("INSERT INTO advantages(icon, title, text) VALUES(?,?,?)",
+                         (icon.strip(), title.strip(), text.strip()))
+    return redirect("/admin/advantages")
+
+
+@app.post("/admin/advantages/{adv_id}/delete")
+def admin_advantage_delete(adv_id: int, admin: str = Depends(require_admin)):
+    with db.db() as conn:
+        conn.execute("DELETE FROM advantages WHERE id=?", (adv_id,))
+    return redirect("/admin/advantages")
+
+
+@app.post("/admin/advantages/text")
+async def admin_advantage_text_save(
+    request: Request, admin: str = Depends(require_admin),
+):
+    form = await request.form()
+    for k in form.keys():
+        if k.startswith("prices_note_") or k.startswith("prices_surcharge_"):
+            db.set_setting(k, str(form[k]).strip())
+    return redirect("/admin/advantages")
 
 
 # ---------- админка: галерея ----------
@@ -400,12 +474,15 @@ def admin_review_delete(review_id: int, admin: str = Depends(require_admin)):
 
 SETTING_FIELDS = [
     ("site_name", "Название сайта"),
-    ("tagline", "Короткий слоган"),
+    ("tagline", "Короткий слоган (meta-описание)"),
+    ("hero_kicker", "Надзаголовок на первом экране"),
     ("hero_title", "Заголовок на первом экране"),
     ("hero_subtitle", "Подзаголовок на первом экране"),
-    ("about_text", "Текст раздела «О нас»"),
-    ("manager_photo", "Фото заведующей (раздел «О нас», круглое)"),
-    ("hero_image", "Фоновое фото первого экрана (желательно вертикальное, ≥1200px)"),
+    ("about_text", "Текст раздела «О нас» (резервный)"),
+    ("manager_title", "Заголовок блока «Лицо ателье»"),
+    ("manager_quote", "Цитата заведующей (блок «Лицо ателье»)"),
+    ("manager_photo", "Фото заведующей (блок «Лицо ателье»)"),
+    ("hero_image", "Фоновое фото первого экрана (желательно ≥1600px)"),
     ("manager_name", "Имя руководителя"),
     ("manager_role", "Должность руководителя"),
     ("manager_note", "Примечание о руководителе"),
