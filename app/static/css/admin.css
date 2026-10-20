@@ -12,7 +12,7 @@
   --shadow: 0 18px 40px -22px rgba(32,27,21,.25);
 }
 * { margin: 0; padding: 0; box-sizing: border-box; }
-body { font-family: "Golos Text", "Segoe UI", system-ui, sans-serif; background: var(--bg); color: var(--ink); line-height: 1.55; }
+body { font-family: "Manrope", sans-serif; background: var(--bg); color: var(--ink); line-height: 1.55; }
 a { text-decoration: none; color: inherit; }
 
 .admin-layout { display: flex; min-height: 100vh; }
