@@ -1,9 +1,8 @@
 __pycache__/
 *.pyc
 *.log
-data/*.db
-
-__pycache__/
-*.pyc
 server.log
 data/atele.db
+data/.secret_key
+app/static/uploads/*
+!app/static/uploads/.gitkeep

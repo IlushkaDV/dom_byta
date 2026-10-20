@@ -255,36 +255,47 @@ def admin_gallery_save(
     admin: str = Depends(require_admin),
     id: int = Form(0), title: str = Form(...), before_text: str = Form(""),
     after_text: str = Form(""), price: str = Form(""), image: UploadFile | None = File(None),
+    before_image: UploadFile | None = File(None), after_image: UploadFile | None = File(None),
 ):
     if not title.strip():
         raise HTTPException(400, "Название обязательно")
     img_path = _save_upload(image) if image else None
+    before_path = _save_upload(before_image) if before_image else None
+    after_path = _save_upload(after_image) if after_image else None
     with db.db() as conn:
         if id:
-            if img_path:
-                conn.execute("UPDATE gallery_items SET title=?, before_text=?, after_text=?, price=?, image_path=? WHERE id=?",
-                             (title, before_text, after_text, price, img_path, id))
-            else:
-                conn.execute("UPDATE gallery_items SET title=?, before_text=?, after_text=?, price=? WHERE id=?",
-                             (title, before_text, after_text, price, id))
+            row = conn.execute("SELECT * FROM gallery_items WHERE id=?", (id,)).fetchone()
+            if not row:
+                raise HTTPException(404, "Работа не найдена")
+            new_img = img_path if img_path is not None else row["image_path"]
+            new_before = before_path if before_path is not None else row["before_image_path"]
+            new_after = after_path if after_path is not None else row["after_image_path"]
+            conn.execute(
+                "UPDATE gallery_items SET title=?, before_text=?, after_text=?, price=?, "
+                "image_path=?, before_image_path=?, after_image_path=? WHERE id=?",
+                (title, before_text, after_text, price, new_img, new_before, new_after, id))
         else:
             conn.execute(
-                "INSERT INTO gallery_items(title, before_text, after_text, price, image_path) VALUES(?,?,?,?,?)",
-                (title, before_text, after_text, price, img_path or ""))
+                "INSERT INTO gallery_items(title, before_text, after_text, price, image_path, "
+                "before_image_path, after_image_path) VALUES(?,?,?,?,?,?,?)",
+                (title, before_text, after_text, price, img_path or "", before_path or "", after_path or ""))
     return redirect("/admin/gallery")
 
 
 @app.post("/admin/gallery/{item_id}/delete")
 def admin_gallery_delete(item_id: int, admin: str = Depends(require_admin)):
     with db.db() as conn:
-        row = conn.execute("SELECT image_path FROM gallery_items WHERE id=?", (item_id,)).fetchone()
+        row = conn.execute("SELECT image_path, before_image_path, after_image_path FROM gallery_items WHERE id=?",
+                           (item_id,)).fetchone()
         conn.execute("DELETE FROM gallery_items WHERE id=?", (item_id,))
-    if row and row["image_path"]:
-        p = os.path.join(BASE_DIR, "..", row["image_path"].lstrip("/"))
-        try:
-            os.remove(p)
-        except OSError:
-            pass
+    if row:
+        for path in (row["image_path"], row["before_image_path"], row["after_image_path"]):
+            if path:
+                p = os.path.join(BASE_DIR, "..", path.lstrip("/"))
+                try:
+                    os.remove(p)
+                except OSError:
+                    pass
     return redirect("/admin/gallery")
 
 

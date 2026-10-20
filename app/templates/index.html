@@ -118,8 +118,15 @@
     <div class="gallery-grid">
       {% for g in gallery %}
       <article class="work-card tilt reveal" data-delay="{{ loop.index0 % 3 * 100 }}">
-        <div class="work-img">
-          {% if g.image_path %}
+        {% set has_pair = g.before_image_path and g.after_image_path %}
+        <div class="work-img{% if has_pair %} ba-slider{% endif %}"{% if has_pair %} tabindex="0" role="slider" aria-label="Перетащите, чтобы сравнить фото до и после" aria-valuemin="0" aria-valuemax="100" aria-valuenow="50"{% endif %}>
+          {% if has_pair %}
+          <img class="ba-after" src="{{ g.after_image_path }}" alt="{{ g.title }} — после" loading="lazy">
+          <div class="ba-before"><img src="{{ g.before_image_path }}" alt="{{ g.title }} — до" loading="lazy"></div>
+          <div class="ba-handle" aria-hidden="true"><span></span></div>
+          <span class="work-before-tag">До</span>
+          <span class="work-after-tag">После</span>
+          {% elif g.image_path %}
           <img src="{{ g.image_path }}" alt="{{ g.title }}" loading="lazy">
           {% else %}
           <div class="work-placeholder" aria-hidden="true">

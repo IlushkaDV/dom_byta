@@ -9,11 +9,12 @@
     <button class="btn btn-gold btn-sm" data-open="galModal" onclick="resetGal()">＋ Добавить работу</button>
   </div>
   <table>
-    <thead><tr><th>Фото</th><th>Название</th><th>До</th><th>После</th><th>Цена</th><th>Действия</th></tr></thead>
+    <thead><tr><th>Фото «До»</th><th>Фото «После»</th><th>Название</th><th>До</th><th>После</th><th>Цена</th><th>Действия</th></tr></thead>
     <tbody>
       {% for g in items %}
       <tr>
-        <td>{% if g.image_path %}<img class="thumb" src="{{ g.image_path }}" alt="">{% else %}<div class="thumb-placeholder">нет фото</div>{% endif %}</td>
+        <td>{% if g.before_image_path %}<img class="thumb" src="{{ g.before_image_path }}" alt="">{% elif g.image_path %}<img class="thumb" src="{{ g.image_path }}" alt=""><br><small style="color:#8a7f6e">общее</small>{% else %}<div class="thumb-placeholder">нет фото</div>{% endif %}</td>
+        <td>{% if g.after_image_path %}<img class="thumb" src="{{ g.after_image_path }}" alt="">{% elif g.image_path and g.before_image_path %}<img class="thumb" src="{{ g.image_path }}" alt=""><br><small style="color:#8a7f6e">общее</small>{% else %}<div class="thumb-placeholder">нет фото</div>{% endif %}</td>
         <td><b>{{ g.title }}</b></td>
         <td style="max-width:200px">{{ g.before_text[:80] }}</td>
         <td style="max-width:200px">{{ g.after_text[:80] }}</td>
@@ -41,8 +42,13 @@
         <div class="field full"><label>Что было (до)</label><textarea name="before_text" placeholder="Описание состояния до работы"></textarea></div>
         <div class="field full"><label>Что стало (после)</label><textarea name="after_text" placeholder="Результат, срок выполнения"></textarea></div>
         <div class="field"><label>Цена</label><input type="text" name="price" placeholder="2 000 ₽"></div>
-        <div class="field"><label>Фотография</label>
-          <input type="file" name="image" accept="image/*" style="padding-top:16px">
+        <div class="field"><label>Фото «До»</label>
+          <input type="file" name="before_image" accept="image/*" style="padding-top:16px">
+          <small class="hint" data-for="before_image"></small>
+        </div>
+        <div class="field"><label>Фото «После»</label>
+          <input type="file" name="after_image" accept="image/*" style="padding-top:16px">
+          <small class="hint" data-for="after_image"></small>
         </div>
       </div>
       <div class="form-actions">

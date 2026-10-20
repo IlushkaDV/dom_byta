@@ -44,6 +44,8 @@ CREATE TABLE IF NOT EXISTS gallery_items (
     id         INTEGER PRIMARY KEY AUTOINCREMENT,
     title      TEXT NOT NULL,
     image_path TEXT NOT NULL DEFAULT '',
+    before_image_path TEXT NOT NULL DEFAULT '',
+    after_image_path  TEXT NOT NULL DEFAULT '',
     before_text TEXT NOT NULL DEFAULT '',
     after_text  TEXT NOT NULL DEFAULT '',
     price      TEXT NOT NULL DEFAULT '',
@@ -148,6 +150,13 @@ DEFAULT_GALLERY = [
 def init_db() -> None:
     with db() as conn:
         conn.executescript(SCHEMA)
+
+        # Миграция: поля для фото «до/после» в галерее
+        cols = {r["name"] for r in conn.execute("PRAGMA table_info(gallery_items)")}
+        if "before_image_path" not in cols:
+            conn.execute("ALTER TABLE gallery_items ADD COLUMN before_image_path TEXT NOT NULL DEFAULT ''")
+        if "after_image_path" not in cols:
+            conn.execute("ALTER TABLE gallery_items ADD COLUMN after_image_path TEXT NOT NULL DEFAULT ''")
 
         # Настройки — заполняем только отсутствующие ключи
         existing = {r["key"] for r in conn.execute("SELECT key FROM settings")}

@@ -186,3 +186,54 @@
     sections.forEach(s => sio.observe(s));
   }
 })();
+
+/* ---------- Before/After слайдер в галерее ---------- */
+(function () {
+  document.querySelectorAll(".ba-slider").forEach(function (el) {
+    var dragging = false;
+    function setPos(clientX) {
+      var r = el.getBoundingClientRect();
+      var p = Math.min(96, Math.max(4, ((clientX - r.left) / r.width) * 100));
+      el.style.setProperty("--ba-pos", p + "%");
+      el.setAttribute("aria-valuenow", Math.round(p));
+    }
+    el.addEventListener("pointerdown", function (e) {
+      dragging = true;
+      el.setPointerCapture(e.pointerId);
+      setPos(e.clientX);
+      e.preventDefault();
+    });
+    el.addEventListener("pointermove", function (e) { if (dragging) setPos(e.clientX); });
+    el.addEventListener("pointerup", function () { dragging = false; });
+    el.addEventListener("pointercancel", function () { dragging = false; });
+    el.addEventListener("keydown", function (e) {
+      var cur = parseFloat(el.getAttribute("aria-valuenow")) || 50;
+      if (e.key === "ArrowLeft") { cur = Math.max(4, cur - 4); }
+      else if (e.key === "ArrowRight") { cur = Math.min(96, cur + 4); }
+      else return;
+      e.preventDefault();
+      el.style.setProperty("--ba-pos", cur + "%");
+      el.setAttribute("aria-valuenow", Math.round(cur));
+    });
+    // лёгкая демо-анимация при первом появлении
+    if ("IntersectionObserver" in window) {
+      var io = new IntersectionObserver(function (entries) {
+        entries.forEach(function (en) {
+          if (!en.isIntersecting) return;
+          io.unobserve(el);
+          var start = null;
+          function step(ts) {
+            if (!start) start = ts;
+            var t = ts - start;
+            if (t > 900 || dragging) return;
+            var p = 50 + Math.sin(t / 900 * Math.PI) * 18;
+            el.style.setProperty("--ba-pos", p + "%");
+            requestAnimationFrame(step);
+          }
+          requestAnimationFrame(step);
+        });
+      }, { threshold: 0.4 });
+      io.observe(el);
+    }
+  });
+})();
