@@ -535,7 +535,7 @@ SETTING_FIELDS = [
     ("manager_title", "Заголовок блока «Лицо ателье»"),
     ("manager_quote", "Цитата заведующей (блок «Лицо ателье»)"),
     ("manager_photo", "Фото заведующей (блок «Лицо ателье»)"),
-    ("manager_signature", "Рукописная подпись заведующей (фото подписи на белом листе)"),
+    ("manager_signature", "Рукописная подпись заведующей (PNG с прозрачным фоном)"),
     ("hero_image", "Фоновое фото первого экрана (желательно ≥1600px)"),
     ("dir_img_meh", "Фото карточки «Меховое ателье» (блок «Что мы делаем»)"),
     ("dir_img_kozha", "Фото карточки «Кожа и дублёнки»"),
@@ -557,39 +557,22 @@ IMAGE_SETTINGS = {"manager_photo", "manager_signature", "hero_image",
                   "dir_img_meh", "dir_img_kozha", "dir_img_poshiv", "dir_img_remont"}
 
 
-def _trace_signature(path: str) -> None:
-    """Для загруженного фото подписи: убираем белый фон (делаем прозрачным),
-    поджигаем чёрнила и обрезаем пустые поля. При неудаче молча пропускаем."""
+def _trim_signature(path: str) -> None:
+    """Для загруженной подписи (PNG с прозрачным фоном): оставляем файл как есть,
+    только обрезаем пустые прозрачные поля. При неудаче молча пропускаем."""
     try:
-        from PIL import Image, ImageChops
+        from PIL import Image
         src_path = os.path.normpath(os.path.join(BASE_DIR, path.lstrip("/")))
-        img = Image.open(src_path).convert("RGB")
-        w, h = img.size
-        if w < 60 or h < 40:
-            return
-        gray = img.convert("L")
-        # бинаризация по порогу: тёмное = чернила
-        lut = []
-        for v in range(256):
-            a = max(0, min(255, int((185 - v) * 3)))
-            lut.extend([a])
-        alpha = gray.point(lut)
-        rgba = img.convert("RGBA")
-        rgba.putalpha(alpha)
-        # цвет чернил — графитовый
-        r, g, b, a = rgba.split()
-        ink = Image.new("RGB", (w, h), (38, 38, 46))
-        out_img = Image.merge("RGBA", (*ink.split(), a))
-        # авто-обрезка по содержимому
-        bbox = a.getbbox()
+        img = Image.open(src_path)
+        if img.mode != "RGBA":
+            return  # не PNG с альфа-каналом — используем как есть
+        bbox = img.getchannel("A").getbbox()
         if bbox and bbox[2] - bbox[0] > 40 and bbox[3] - bbox[1] > 20:
-            pad = 12
+            pad = 8
+            w, h = img.size
             x0 = max(0, bbox[0] - pad); y0 = max(0, bbox[1] - pad)
             x1 = min(w, bbox[2] + pad); y1 = min(h, bbox[3] + pad)
-            out_img = out_img.crop((x0, y0, x1, y1))
-        out = src_path.rsplit(".", 1)[0] + "-ink.png"
-        out_img.save(out)
-        db.set_setting("manager_signature", path.rsplit(".", 1)[0] + "-ink.png")
+            img.crop((x0, y0, x1, y1)).save(src_path)
     except Exception:
         pass
 
@@ -613,14 +596,12 @@ async def admin_settings_save(request: Request, admin: str = Depends(require_adm
                 db.set_setting(key, new_path)
                 _remove_upload(old)  # чистим старый файл
                 if key == "manager_signature":
-                    _trace_signature(new_path)
+                    _trim_signature(new_path)
             remove_flag = str(form.get(f"{key}_remove") or "").strip()
             if remove_flag:
                 old = db.get_all_settings().get(key, "")
                 db.set_setting(key, "")
                 _remove_upload(old)
-                if key == "manager_signature":
-                    db.set_setting("manager_signature_mask", "")
         elif key in form:
             db.set_setting(key, str(form[key]).strip())
     return redirect("/admin/settings?saved=1")
