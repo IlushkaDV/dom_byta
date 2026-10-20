@@ -532,34 +532,21 @@ img.manager-photo {
 }
 @media (max-width: 640px) { .seam { height: 70px; } .seam-needle svg { width: 34px; height: 34px; } }
 
-/* ===== Hero: бобина с разматывающейся нитью ===== */
-.hero-thread {
-  position: absolute; right: 2%; bottom: 12%; width: min(560px, 46vw); height: auto;
-  z-index: 1; pointer-events: none; opacity: .8;
-}
-#threadPath {
-  stroke: var(--gold-light); stroke-width: 2; fill: none;
-  stroke-dasharray: 1400; stroke-dashoffset: 1400;
-  transition: stroke-dashoffset .35s linear;
-}
-.hero-thread .spool rect { fill: rgba(246,241,232,.1); stroke: var(--gold-light); stroke-width: 2; }
-.hero-thread .spool line { stroke: var(--gold-light); stroke-width: 2; }
-.hero-thread .spool path { stroke: rgba(217,184,124,.7); stroke-width: 1.6; }
-@media (max-width: 1024px) { .hero-thread { display: none; } }
 
-/* ===== Нить через ВСЮ страницу: полотно от шапки до подвала, игла бежит по скроллу ===== */
+/* ===== Масштабная нить: игла следует за курсором, нить тянется через весь экран ===== */
 .page-thread {
-  position: absolute; top: 0; left: 0; z-index: 2;
-  pointer-events: none; overflow: visible;
+  position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 3;
+  pointer-events: none; overflow: visible; opacity: 0; transition: opacity .6s;
 }
+.page-thread.is-active { opacity: 1; }
 .thread-stitch {
   stroke: var(--gold-light); stroke-width: 2.4; fill: none;
   stroke-dasharray: 8 10; stroke-linecap: round; opacity: .55;
 }
-#pageThreadPath { visibility: hidden; }
+#pageThreadPath { visibility: visible; }
 .thread-needle {
   stroke: var(--gold-light); stroke-width: 1.8; fill: rgba(246,241,232,.15);
-  opacity: 0; transition: opacity .3s;
+  opacity: 1;
 }
 @media (max-width: 768px) {
   .page-thread { display: none; }   /* на мобильных нить не перекрывает контент */

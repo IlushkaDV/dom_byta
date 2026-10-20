@@ -240,82 +240,82 @@
     seamStitch.style.opacity = ".85";
   }
 
-  /* ---- Hero: нить «разматывается» с бобины при прокрутке ---- */
-  const thread = document.getElementById("threadPath");
-  if (thread) {
-    const len = thread.getTotalLength();
-    thread.style.strokeDasharray = len;
-    const updateThread = () => {
-      const max = heroEl ? heroEl.offsetHeight : innerHeight;
-      const p = Math.min(1, scrollY / Math.max(max * .7, 1));
-      thread.style.strokeDashoffset = String(len * (1 - p));
-    };
-    addEventListener("scroll", updateThread, { passive: true });
-    updateThread();
-  }
-
-  /* ---- Нить через всю страницу: полотно от шапки до подвала, игла бежит при прокрутке ---- */
+  /* ---- Масштабная нить через всю страницу ----
+     Игла закреплена в центре экрана и следует за курсором мыши.
+     От неё вниз тянется длинная волнистая нить, которая колышется
+     вслед за движением иглы — как настоящая свободная нитка.
+     Полотно занимает всю ширину и высоту страницы. */
   const pageThreadSvg = document.querySelector(".page-thread");
   const pageThreadPath = document.getElementById("pageThreadPath");
   const pageThreadNeedle = document.getElementById("pageThreadNeedle");
-  if (pageThreadSvg && pageThreadPath) {
-    const HEADER_H = 96, MARGIN_R = 44, WAVE_AMP = 30, WAVE_STEP = 110;
-    let docH = 1, raf = null, x0 = 0, yStart = 0, yEnd = 0;
+  if (pageThreadSvg && pageThreadPath && pageThreadNeedle) {
+    const THREAD_LEN = 1500;   // длина свисающей нити, px
+    const SEGMENTS = 26;       // количество сегментов пружины
+    const STIFFNESS = 0.08;    // жёсткость пружины (меньше = более текучая нить)
+    const DAMPING = 0.82;      // затухание (больше = дольше качается)
 
-    function setup() {
-      const vh = innerHeight;
-      docH = Math.max(document.documentElement.scrollHeight, vh);
-      // SVG-полотно на всю высоту документа — нить реально идёт через всю страницу
-      pageThreadSvg.style.width = innerWidth + "px";
-      pageThreadSvg.style.height = docH + "px";
-      pageThreadSvg.setAttribute("viewBox", `0 0 ${innerWidth} ${docH}`);
-      x0 = Math.max(innerWidth - MARGIN_R, innerWidth * .5 + 160);
-      yStart = HEADER_H + 20;
-      yEnd = docH - 40;
+    pageThreadSvg.classList.add("is-active");
+
+    // точка крепления иглы — центр экрана, смещаемый курсором
+    const anchor = { x: innerWidth / 2, y: innerHeight / 2 };
+    const target = { x: anchor.x, y: anchor.y };
+    // узлы нити: каждый тянется к предыдущему, но отстаёт (эффект верёвки)
+    const pts = [];
+    for (let i = 0; i <= SEGMENTS; i++) {
+      pts.push({ x: anchor.x, y: anchor.y + (THREAD_LEN / SEGMENTS) * i });
     }
 
-    // волнистая линия от yStart до yTo (зигзаг из квадратных кривых)
-    function wavePath(yTo) {
-      if (yTo <= yStart + 1) return "";
-      let d = `M${x0},${yStart}`;
-      let i = 0;
-      for (let y = yStart; y < yTo; y += WAVE_STEP, i++) {
-        const ny = Math.min(y + WAVE_STEP, yTo);
-        const dir = i % 2 === 0 ? 1 : -1;
-        d += ` Q${(x0 + dir * WAVE_AMP).toFixed(1)},${((y + ny) / 2).toFixed(1)} ${x0},${ny.toFixed(1)}`;
-      }
-      return d;
+    function onPointer(e) {
+      const x = e.touches ? e.touches[0].clientX : e.clientX;
+      const y = e.touches ? e.touches[0].clientY : e.clientY;
+      // игла следует за курсором в пределах центральной зоны экрана
+      target.x = Math.min(Math.max(x, innerWidth * 0.15), innerWidth * 0.85);
+      target.y = Math.min(Math.max(y, innerHeight * 0.15), innerHeight * 0.6);
     }
+    addEventListener("mousemove", onPointer, { passive: true });
+    addEventListener("touchmove", onPointer, { passive: true });
 
-    function updatePageThread() {
-      raf = null;
-      const vh = innerHeight;
-      const maxScroll = Math.max(docH - vh, 1);
-      const p = Math.min(1, Math.max(0, scrollY / maxScroll));
-      // игла всегда в нижней трети видимого окна — создаётся эффект, что она «шьёт» по ходу скролла
-      const needleY = Math.min(scrollY + vh * .7, yEnd);
-      const d = wavePath(needleY);
-      if (d) {
-        pageThreadPath.setAttribute("d", d);
-        pageThreadPath.style.visibility = "visible";
-      } else {
-        pageThreadPath.removeAttribute("d");
-        pageThreadPath.style.visibility = "hidden";
+    function step() {
+      // плавно двигаем иглу к курсору
+      anchor.x += (target.x - anchor.x) * 0.1;
+      anchor.y += (target.y - anchor.y) * 0.1;
+
+      // физика нити: каждый следующий узел притягивается к предыдущему
+      pts[0].x = anchor.x;
+      pts[0].y = anchor.y;
+      for (let i = 1; i < pts.length; i++) {
+        const prev = pts[i - 1], p = pts[i];
+        const dx = prev.x - p.x, dy = prev.y - p.y;
+        p.vx = ((p.vx || 0) + dx * STIFFNESS) * DAMPING;
+        p.vy = ((p.vy || 0) + dy * STIFFNESS) * DAMPING + 0.15; // лёгкая сила тяжести
+        p.x += p.vx;
+        p.y += p.vy;
+        // фиксированное расстояние между узлами
+        const ang = Math.atan2(p.y - prev.y, p.x - prev.x);
+        const seg = THREAD_LEN / SEGMENTS;
+        p.x = prev.x + Math.cos(ang) * seg;
+        p.y = prev.y + Math.sin(ang) * seg;
       }
-      if (pageThreadNeedle) {
-        pageThreadNeedle.setAttribute("transform", `translate(${x0},${needleY.toFixed(1)})`);
-        pageThreadNeedle.style.opacity = p > .002 ? "1" : "0";
+
+      // рисуем гладкую кривую через все узлы (квадратичные безье через середины)
+      let d = `M${pts[0].x.toFixed(1)},${pts[0].y.toFixed(1)}`;
+      for (let i = 1; i < pts.length - 1; i++) {
+        const mx = (pts[i].x + pts[i + 1].x) / 2;
+        const my = (pts[i].y + pts[i + 1].y) / 2;
+        d += ` Q${pts[i].x.toFixed(1)},${pts[i].y.toFixed(1)} ${mx.toFixed(1)},${my.toFixed(1)}`;
       }
+      const last = pts[pts.length - 1];
+      d += ` L${last.x.toFixed(1)},${last.y.toFixed(1)}`;
+      pageThreadPath.setAttribute("d", d);
+
+      // игла: позиция + угол наклона к первому сегменту нити
+      const tilt = Math.atan2(pts[1].y - pts[0].y, pts[1].x - pts[0].x) * 180 / Math.PI - 90;
+      pageThreadNeedle.setAttribute("transform",
+        `translate(${anchor.x.toFixed(1)},${anchor.y.toFixed(1)}) rotate(${tilt.toFixed(1)})`);
+
+      requestAnimationFrame(step);
     }
-
-    const scheduleUpdate = () => { if (!raf) raf = requestAnimationFrame(updatePageThread); };
-    setup();
-    updatePageThread();
-    addEventListener("scroll", scheduleUpdate, { passive: true });
-    addEventListener("resize", () => { setup(); updatePageThread(); });
-    // пересчёт после загрузки изображений/шрифтов (высота страницы может измениться)
-    addEventListener("load", () => { setup(); updatePageThread(); });
-    setTimeout(() => { setup(); updatePageThread(); }, 1200);
+    step();
   }
 })();
 
