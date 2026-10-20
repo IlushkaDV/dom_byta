@@ -303,14 +303,15 @@ img.manager-photo {
   transition: transform .7s var(--ease);
 }
 .dir-card:hover .dir-photo img { transform: scale(1.05); }
-.dir-badge {
-  position: absolute; right: 14px; bottom: -20px; width: 54px; height: 54px;
-  display: grid; place-items: center; font-size: 24px; border-radius: 50%;
-  background: var(--paper); border: 1px solid rgba(185,138,68,.35);
-  box-shadow: 0 8px 20px rgba(23,19,15,.12); z-index: 2;
-  transition: transform .5s var(--ease);
+/* заглушка, пока фото направления не загружено в админке */
+.dir-photo-empty {
+  position: absolute; inset: 0; display: grid; place-items: center; text-align: center;
+  padding: 16px; font-size: 13px; line-height: 1.5; color: var(--taupe);
+  background:
+    repeating-linear-gradient(-45deg, transparent 0 10px, rgba(185,138,68,.05) 10px 20px),
+    var(--cream);
+  border-bottom: 1px dashed rgba(185,138,68,.4);
 }
-.dir-card:hover .dir-badge { transform: rotate(-10deg) scale(1.06); }
 .dir-card-body { padding: 30px 28px 28px; display: flex; flex-direction: column; flex: 1; }
 .dir-card-body h3 {
   font-family: var(--font-display); font-weight: 600;
@@ -471,28 +472,67 @@ img.manager-photo {
 .tag-after { background: rgba(185,138,68,.16); color: var(--gold-dark); }
 .work-price { margin-top: 12px; font-weight: 800; color: var(--gold-dark); }
 
-/* ---------- Steps: вертикальная «строчка» зигзагом ---------- */
-.steps-line { position: relative; max-width: 940px; margin: 56px auto 0; }
-.steps-line::before {
-  content: ""; position: absolute; left: 50%; top: 12px; bottom: 12px; width: 3px;
-  transform: translateX(-50%); border-radius: 3px; opacity: .7;
-  background-image: repeating-linear-gradient(180deg, var(--gold) 0 12px, transparent 12px 24px);
+/* ---------- Steps: «выкройки» на расчерченном полотне ---------- */
+.steps-wrap {
+  position: relative; margin-top: 56px; padding: clamp(34px, 5vw, 60px);
+  background: var(--paper); border: 1px solid var(--line); border-radius: 24px;
+  overflow: hidden;
 }
-.step-item { display: grid; grid-template-columns: 1fr 72px 1fr; align-items: center; margin-bottom: 34px; }
-.step-item:last-child { margin-bottom: 0; }
-.step-node {
-  grid-column: 2; justify-self: center; width: 64px; height: 64px; border-radius: 50%;
-  background: var(--paper); border: 2px solid var(--gold); color: var(--ink);
-  font-family: var(--font-display); font-weight: 600; font-size: 26px;
-  display: grid; place-items: center; position: relative; z-index: 1;
-  box-shadow: 0 0 0 10px var(--cream), 0 12px 26px rgba(15,12,9,.14);
-  transition: transform .5s var(--ease), background .4s, color .4s;
+/* миллиметровая расцветка лекала + золотые угловые «стежки» */
+.steps-wrap::before {
+  content: ""; position: absolute; inset: 0; pointer-events: none;
+  background-image:
+    linear-gradient(rgba(185,138,68,.07) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(185,138,68,.07) 1px, transparent 1px);
+  background-size: 30px 30px;
 }
-.step-item:hover .step-node { transform: scale(1.1) rotate(-6deg); background: var(--gold); color: #fff; }
-.step-body { grid-column: 1; grid-row: 1; text-align: right; padding-right: 8px; }
-.step-right .step-body { grid-column: 3; text-align: left; padding: 0 0 0 8px; }
-.step-body h3 { font-family: var(--font-display); font-weight: 600; font-size: clamp(21px, 2.4vw, 27px); margin-bottom: 6px; }
-.step-body p { color: var(--taupe); font-size: 15px; line-height: 1.6; }
+.steps-wrap::after {
+  content: ""; position: absolute; inset: 12px; pointer-events: none; border-radius: 16px;
+  border: 1.5px dashed rgba(185,138,68,.35);
+}
+.steps-line {
+  position: relative; z-index: 1;
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px;
+}
+.step-card {
+  background: var(--cream); border: 1px solid var(--line); border-radius: 16px;
+  padding: 28px 24px 26px; position: relative;
+  transition: transform .5s var(--ease), box-shadow .5s var(--ease), border-color .4s;
+}
+.step-card:hover {
+  transform: translateY(-6px); border-color: rgba(185,138,68,.45);
+  box-shadow: 0 18px 40px rgba(23,19,15,.10);
+}
+.step-num {
+  display: inline-grid; place-items: center; width: 46px; height: 46px; border-radius: 50%;
+  font-family: var(--font-display); font-weight: 600; font-size: 21px; color: #fff;
+  background: linear-gradient(135deg, var(--gold), var(--gold-dark));
+  box-shadow: 0 8px 18px rgba(185,138,68,.35);
+  margin-bottom: 18px;
+  transition: transform .5s var(--ease);
+}
+.step-card:hover .step-num { transform: rotate(-8deg) scale(1.06); }
+.step-card h3 {
+  font-family: var(--font-display); font-weight: 600;
+  font-size: clamp(19px, 1.8vw, 23px); margin-bottom: 8px;
+}
+.step-card p { color: var(--taupe); font-size: 14.5px; line-height: 1.6; }
+/* пунктирная «строчка» между карточками */
+.step-card:not(:last-child)::after {
+  content: ""; position: absolute; top: 46px; right: -20px; width: 20px; height: 0;
+  border-top: 2px dashed rgba(185,138,68,.5);
+}
+@media (max-width: 980px) {
+  .steps-line { grid-template-columns: repeat(2, 1fr); }
+  .step-card:nth-child(2)::after { display: none; }
+}
+@media (max-width: 560px) {
+  .steps-line { grid-template-columns: 1fr; }
+  .step-card:not(:last-child)::after {
+    top: auto; bottom: -20px; left: 46px; right: auto; width: 0; height: 20px;
+    border-top: none; border-left: 2px dashed rgba(185,138,68,.5);
+  }
+}
 
 /* ---------- Reviews ---------- */
 .reviews { background: var(--ink); color: var(--cream); }
@@ -521,13 +561,15 @@ img.manager-photo {
 .order-grid { display: grid; grid-template-columns: 1fr 1fr; gap: clamp(36px, 6vw, 80px); align-items: start; }
 .order-steps { list-style: none; margin-top: 30px; display: grid; gap: 14px; }
 .order-steps li { display: flex; gap: 18px; align-items: center; }
+.order-step-num {
+  display: inline-grid; place-items: center; width: 42px; height: 42px; border-radius: 50%;
+  font-family: var(--font-display); font-weight: 600; font-size: 19px; color: #fff; flex: none;
+  background: linear-gradient(135deg, var(--gold), var(--gold-dark));
+  box-shadow: 0 6px 16px rgba(185,138,68,.3);
+}
 .order-steps b {
   font-family: var(--font-display); font-size: 26px; color: var(--gold); width: 54px; height: 54px;
   border: 1px solid rgba(185,138,68,.4); border-radius: 16px; display: grid; place-items: center; flex: none;
-}
-.order-steps li svg {
-  width: 40px; height: 40px; padding: 9px; box-sizing: border-box; flex: none;
-  color: var(--gold-dark); border: 1px solid rgba(185,138,68,.4); border-radius: 50%;
 }
 .order-form {
   background: var(--paper); border: 1px solid var(--line); border-radius: var(--radius);
@@ -611,11 +653,6 @@ img.manager-photo {
   .price-dots { display: none; }
   .price-order { margin-left: auto; }
   .hero-stats { gap: 22px; }
-  /* steps: одна колонка, линия слева */
-  .steps-line::before { left: 31px; transform: none; }
-  .step-item { grid-template-columns: 62px 1fr; margin-bottom: 28px; }
-  .step-node { grid-column: 1; width: 50px; height: 50px; font-size: 20px; box-shadow: 0 0 0 8px var(--cream), 0 10px 20px rgba(15,12,9,.14); }
-  .step-body, .step-right .step-body { grid-column: 2; grid-row: 1; text-align: left; padding: 0 0 0 14px; }
   .prices-modal-panel { inset: 2vh 50%; max-height: 96vh; }
   .manager-card { flex-wrap: wrap; }
   .manager-phone { margin: 6px 0 0; }

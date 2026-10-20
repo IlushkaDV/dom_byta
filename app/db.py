@@ -49,6 +49,7 @@ CREATE TABLE IF NOT EXISTS gallery_items (
     before_text TEXT NOT NULL DEFAULT '',
     after_text  TEXT NOT NULL DEFAULT '',
     price      TEXT NOT NULL DEFAULT '',
+    category   TEXT NOT NULL DEFAULT '',
     created_at TEXT NOT NULL DEFAULT (datetime('now','localtime'))
 );
 
@@ -125,6 +126,12 @@ DEFAULT_SETTINGS = {
         "абсолютно уверены в безупречном результате."
     ),
     "manager_note": "Занимается контролем качества исполнения услуг",
+    # Фото для карточек четырёх направлений (загружаются в админке; если пусто —
+    # автоматически подтягивается фото из галереи по категории работы)
+    "dir_img_meh": "",
+    "dir_img_kozha": "",
+    "dir_img_poshiv": "",
+    "dir_img_remont": "",
     "manager_photo": "",
     "hero_image": "",
     "address": "Хабаровск, ул. Шеронова, 92, ТЦ «Дом Быта», 6 этаж",
@@ -256,37 +263,40 @@ DEFAULT_ADVANTAGES = [
     ("💎", "Личный контроль качества", "Заведующая ателье лично контролирует каждый заказ — от мелкого ремонта до кутюрного пошива."),
 ]
 
-# Четыре главных направления ателье (блок «плитка»)
+# Четыре главных направления ателье (блок «плитка»).
+# image_key — ключ настройки с фотографией направления (загружается в админке).
 DEFAULT_DIRECTIONS = [
     {
-        "icon": "🧥",
+        "image_key": "dir_img_meh",
         "title": "Меховое ателье",
         "text": "Пошив шуб, жилетов, перекрой, замена подклада, реставрация меха.",
         "tab": "meh",
         "tags": ["Шубы и жилеты", "Перекрой", "Реставрация"],
     },
     {
-        "icon": "👜",
+        "image_key": "dir_img_kozha",
         "title": "Кожа и дублёнки",
         "text": "Пошив куртки, жакета, укорачивание, замена молний, подгонка по фигуре.",
         "tab": "kozha",
         "tags": ["Куртки и жакеты", "Молнии", "Подгонка"],
     },
     {
-        "icon": "👗",
+        "image_key": "dir_img_poshiv",
         "title": "Верхняя одежда и лёгкое платье",
         "text": "Пошив пальто, юбок, костюмов, вечерних платьев и блуз.",
         "tab": "poshiv",
         "tags": ["Пальто", "Платья", "Костюмы"],
     },
     {
-        "icon": "🧵",
+        "image_key": "dir_img_remont",
         "title": "Ремонт и трикотаж",
         "text": "Профессиональное восстановление вязаных изделий, джинс, бытовой ремонт.",
         "tab": "remont",
         "tags": ["Трикотаж", "Джинсы", "Бытовой ремонт"],
     },
 ]
+
+DIRECTION_IMAGE_KEYS = [d["image_key"] for d in DEFAULT_DIRECTIONS]
 
 # Этапы безопасной работы (блок «схема работы»)
 DEFAULT_STEPS = [
@@ -297,8 +307,8 @@ DEFAULT_STEPS = [
 ]
 
 DEFAULT_GALLERY = [
-    ("Реставрация шубы: замена подкладки и фурнитуры", "До: потёртая подкладка и заклинивающая молния. После: как новая вещь.", "Готово через 5 дней", "2 000 ₽"),
-    ("Перешив старинной шубы в современную модель", "До: изделие 90-х годов, устаревший фасон. После: стильная шуба по актуальным лекалам.", "Срок — 3 недели", "от 15 000 ₽"),
+    ("Реставрация шубы: замена подкладки и фурнитуры", "Потёртая подкладка и заклинивающая молния — вернули изделию вид новой вещи.", "Срок — 5 дней", "2 000 ₽"),
+    ("Перешив старинной шубы в современную модель", "Изделие 90-х годов, устаревший фасон — перекроили по актуальным лекалам.", "Срок — 3 недели", "от 15 000 ₽"),
     ("Пошив вечернего платья на заказ", "Индивидуальные лекала, ручная отделка, идеальная посадка по фигуре.", "Срок — 2 недели", "от 6 000 ₽"),
 ]
 
@@ -313,6 +323,31 @@ def init_db() -> None:
             conn.execute("ALTER TABLE gallery_items ADD COLUMN before_image_path TEXT NOT NULL DEFAULT ''")
         if "after_image_path" not in cols:
             conn.execute("ALTER TABLE gallery_items ADD COLUMN after_image_path TEXT NOT NULL DEFAULT ''")
+        if "category" not in cols:
+            conn.execute("ALTER TABLE gallery_items ADD COLUMN category TEXT NOT NULL DEFAULT ''")
+
+        # Заполняем категорию у старых работ без неё — по ключевым словам названия
+        _cat_kw = [("Меховое ателье", ["шуб", "мех", "жилет"]),
+                   ("Кожа и дублёнки", ["кож", "дублен", "дублён"]),
+                   ("Верхняя одежда и лёгкое платье", ["плать", "пальт", "блуз", "костюм", "пошив"]),
+                   ("Ремонт и трикотаж", ["ремонт", "трикот", "джинс", "подклад", "молни"])]
+        for r in conn.execute("SELECT id, title FROM gallery_items WHERE category='' OR category='Ремонт'").fetchall():
+            t = (r["title"] or "").lower()
+            for cat, kws in _cat_kw:
+                if any(k in t for k in kws):
+                    conn.execute("UPDATE gallery_items SET category=? WHERE id=?", (cat, r["id"]))
+                    break
+
+        # Миграция: убираем дублирующиеся префиксы «До:»/«После:» из подписей —
+        # метки-теги рисует шаблон витрины, повторять их в тексте не нужно
+        import re as _re
+        for r in conn.execute("SELECT id, before_text, after_text FROM gallery_items").fetchall():
+            bt = _re.sub(r"^\s*до\s*[::]\s*", "", (r["before_text"] or "").strip(), flags=_re.I)
+            at = _re.sub(r"^\s*после\s*[::]\s*", "", (r["after_text"] or "").strip(), flags=_re.I)
+            at = _re.sub(r"^готово\s+через\s+", "Срок — ", at, flags=_re.I)
+            if (bt, at) != ((r["before_text"] or "").strip(), (r["after_text"] or "").strip()):
+                conn.execute("UPDATE gallery_items SET before_text=?, after_text=? WHERE id=?",
+                             (bt, at, r["id"]))
 
         # Настройки — заполняем только отсутствующие ключи; значения,
         # совпадающие со СТАРЫМИ дефолтами (пользователь их не менял),
@@ -327,7 +362,7 @@ def init_db() -> None:
             ),
             "manager_name": "Щербакова Юлия Борисовна",
             "manager_role": "Заведующая ателье",
-            "address": "г. Хабаровск, ул. Шеронова, 92, ТЦ «Дом Быта», 6 этаж",
+        "address": "г. Хабаровск, ул. Шеронова, 92, ТЦ «Дом Быта», 6 этаж",
             "hours_week": "ПН–ПТ: 10:00 – 20:00",
             "hours_weekend": "СБ–ВС: 10:00 – 19:00",
         }
@@ -375,7 +410,8 @@ def init_db() -> None:
 
 def get_all_settings() -> dict:
     with db() as conn:
-        return {r["key"]: r["value"] for r in conn.execute("SELECT key, value FROM settings")}
+        s = {r["key"]: r["value"] for r in conn.execute("SELECT key, value FROM settings")}
+    return s
 
 
 def set_setting(key: str, value: str) -> None:

@@ -46,9 +46,18 @@
       <input type="hidden" name="id" value="0">
       <div class="form-grid">
         <div class="field full"><label>Название *</label><input type="text" name="title" required placeholder="Например: Реставрация шубы"></div>
-        <div class="field full"><label>Что было (до)</label><textarea name="before_text" placeholder="Описание состояния до работы"></textarea></div>
-        <div class="field full"><label>Что стало (после)</label><textarea name="after_text" placeholder="Результат, срок выполнения"></textarea></div>
+        <div class="field full"><label>Что было (до)</label><textarea name="before_text" placeholder="Описание состояния до работы. Не пишите «До:» — метка уже есть на сайте"></textarea></div>
+        <div class="field full"><label>Что стало (после)</label><textarea name="after_text" placeholder="Результат или срок, например: Срок — 12 дней. Не пишите «После:»"></textarea></div>
         <div class="field"><label>Цена</label><input type="text" name="price" placeholder="2 000 ₽"></div>
+        <div class="field"><label>Направление (для фото в блоке «Что мы делаем»)</label>
+          <select name="category">
+            <option value="">— не выбрано —</option>
+            <option value="Меховое ателье">Меховое ателье</option>
+            <option value="Кожа и дублёнки">Кожа и дублёнки</option>
+            <option value="Верхняя одежда и лёгкое платье">Верхняя одежда и лёгкое платье</option>
+            <option value="Ремонт и трикотаж">Ремонт и трикотаж</option>
+          </select>
+        </div>
         <div class="field"><label>Фото «До»</label>
           <img id="curBefore" class="thumb" src="" alt="" style="display:none;margin-bottom:6px">
           <input type="file" name="before_image" accept="image/*" style="padding-top:16px">
@@ -84,6 +93,8 @@ document.querySelectorAll('[data-edit]').forEach(function (btn) {
     const aPath = g.after_image_path || g.image_path || '';
     cb.src = bPath; cb.style.display = bPath ? '' : 'none';
     ca.src = aPath; ca.style.display = aPath ? '' : 'none';
+    const sel = document.querySelector('[name=category]');
+    if (sel) sel.value = g.category || '';
   });
 });
 </script>

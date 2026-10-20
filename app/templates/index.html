@@ -70,8 +70,11 @@
       {% for d in directions %}
       <article class="dir-card reveal" data-delay="{{ loop.index0 * 90 }}">
         <div class="dir-photo">
-          <img src="/static/img/dir_{{ d.tab }}.svg" alt="" loading="lazy">
-          <span class="dir-badge">{{ d.icon }}</span>
+          {% if d.image %}
+          <img src="{{ d.image }}" alt="{{ d.title }}" loading="lazy">
+          {% else %}
+          <span class="dir-photo-empty">Фото появится здесь —<br>загрузите в админке → «Настройки сайта»</span>
+          {% endif %}
         </div>
         <div class="dir-card-body">
           <h3>{{ d.title }}</h3>
@@ -157,7 +160,7 @@
   <div class="container">
     <span class="section-kicker center reveal">Портфолио</span>
     <h2 class="section-title center reveal">Наши работы: до / после</h2>
-    <p class="section-note reveal">Перетащите ползунок на карточке, чтобы сравнить, что было и что стало.</p>
+    <p class="section-note reveal">Перетащите ползунок на фото, чтобы сравнить, что было и что стало.</p>
     <div class="gallery-grid">
       {% for g in gallery %}
       <article class="work-card tilt reveal" data-delay="{{ loop.index0 % 3 * 100 }}">
@@ -167,8 +170,6 @@
           <img class="ba-after" src="{{ g.after_image_path }}" alt="{{ g.title }} — после" loading="lazy">
           <div class="ba-before"><img src="{{ g.before_image_path }}" alt="{{ g.title }} — до" loading="lazy"></div>
           <div class="ba-handle" aria-hidden="true"><span></span></div>
-          <span class="work-before-tag">До</span>
-          <span class="work-after-tag">После</span>
           {% elif g.image_path %}
           <img src="{{ g.image_path }}" alt="{{ g.title }}" loading="lazy">
           {% else %}
@@ -188,7 +189,7 @@
         <div class="work-body">
           <h3>{{ g.title }}</h3>
           {% if g.before_text %}<p class="work-line"><span class="tag tag-before">До</span> {{ g.before_text }}</p>{% endif %}
-          {% if g.after_text %}<p class="work-line"><span class="tag tag-after">После</span> {{ g.after_text }}</p>{% endif %}
+          {% if g.after_text %}<p class="work-line"><span class="tag tag-after">{% if g.after_text.lower().startswith('срок') %}Срок{% else %}После{% endif %}</span> {{ g.after_text }}</p>{% endif %}
           {% if g.price %}<div class="work-price">{{ g.price }}</div>{% endif %}
         </div>
       </article>
@@ -204,16 +205,16 @@
   <div class="container">
     <span class="section-kicker center reveal">Как мы работаем</span>
     <h2 class="section-title center reveal">Схема безопасной работы</h2>
-    <div class="steps-line">
-      {% for title, text in steps %}
-      <div class="step-item reveal {% if loop.index0 % 2 == 1 %}step-right{% endif %}" data-delay="{{ loop.index0 * 120 }}">
-        <div class="step-node"><span>{{ loop.index }}</span></div>
-        <div class="step-body">
+    <div class="steps-wrap">
+      <div class="steps-line">
+        {% for title, text in steps %}
+        <div class="step-card reveal" data-delay="{{ loop.index0 * 90 }}">
+          <span class="step-num">{{ loop.index }}</span>
           <h3>{{ title }}</h3>
           <p>{{ text }}</p>
         </div>
+        {% endfor %}
       </div>
-      {% endfor %}
     </div>
   </div>
 </section>
@@ -251,10 +252,9 @@
       <h2 class="section-title reveal">Запишитесь на консультацию<br>или пришлите фото для расчёта</h2>
       <p class="reveal">Выберите удобное время для визита к мастеру или прикрепите фото изделия для оценки стоимости онлайн. Мы перезвоним в рабочее время в течение 15 минут.</p>
       <ul class="order-steps">
-        <li class="reveal"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg><span>Заявка на сайте или по телефону</span></li>
-        <li class="reveal"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg><span>Осмотр изделия и снятие мерок на 6 этаже</span></li>
-        <li class="reveal"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg><span>Расчёт стоимости и точных сроков</span></li>
-        <li class="reveal"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg><span>Пошив / ремонт и выдача готового изделия</span></li>
+        {% for step in ['Заявка на сайте или по телефону', 'Осмотр изделия и снятие мерок на 6 этаже', 'Расчёт стоимости и точных сроков', 'Пошив / ремонт и выдача готового изделия'] %}
+        <li class="reveal"><span class="order-step-num">{{ loop.index }}</span><span>{{ step }}</span></li>
+        {% endfor %}
       </ul>
     </div>
     <form class="order-form reveal" method="post" action="/order" id="orderForm" enctype="multipart/form-data">

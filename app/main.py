@@ -94,10 +94,32 @@ def index(request: Request):
         if items:
             price_tabs.append({"dir": d, "items": items})
 
+    # Карточки направлений: фото из настроек (загружаются в админке), при пустой
+    # настройке — первое фото из галереи той же категории; если и там пусто —
+    # любое фото галереи, чтобы карточка не оставалась графической заглушкой.
+    directions = []
+    gal_imgs = [g["before_image_path"] or g["image_path"] for g in gallery]
+    gal_imgs += [g["after_image_path"] for g in gallery]
+    fallback_img = next((p for p in gal_imgs if p), "")
+    for d in DEFAULT_DIRECTIONS:
+        dd = dict(d)
+        img = (s.get(d["image_key"]) or "").strip()
+        if not img:
+            with db.db() as conn:
+                row = conn.execute(
+                    "SELECT image_path, before_image_path FROM gallery_items "
+                    "WHERE category=? ORDER BY id DESC LIMIT 1", (d["title"],)).fetchone()
+            if row:
+                img = row["image_path"] or row["before_image_path"] or ""
+        if not img:
+            img = fallback_img
+        dd["image"] = img
+        directions.append(dd)
+
     return templates.TemplateResponse(request, "index.html", context={
         "s": s, "services": services,
         "advantages": advantages, "gallery": gallery, "reviews": reviews,
-        "directions": DEFAULT_DIRECTIONS, "steps": DEFAULT_STEPS,
+        "directions": directions, "steps": DEFAULT_STEPS,
         "price_tabs": price_tabs,
     })
 
@@ -365,6 +387,7 @@ async def admin_gallery_save(
     before_text = form.get("before_text") or ""
     after_text = form.get("after_text") or ""
     price = form.get("price") or ""
+    category = (form.get("category") or "").strip()
     img_path = await _pick_upload(form, "image")
     before_path = await _pick_upload(form, "before_image")
     after_path = await _pick_upload(form, "after_image")
@@ -381,8 +404,8 @@ async def admin_gallery_save(
                 new_before, new_after = new_img, new_img
             conn.execute(
                 "UPDATE gallery_items SET title=?, before_text=?, after_text=?, price=?, "
-                "image_path=?, before_image_path=?, after_image_path=? WHERE id=?",
-                (title, before_text, after_text, price, new_img, new_before, new_after, id))
+                "image_path=?, before_image_path=?, after_image_path=?, category=? WHERE id=?",
+                (title, before_text, after_text, price, new_img, new_before, new_after, category, id))
         else:
             b = before_path or ""
             a = after_path or ""
@@ -390,9 +413,39 @@ async def admin_gallery_save(
                 b = a = img_path
             conn.execute(
                 "INSERT INTO gallery_items(title, before_text, after_text, price, image_path, "
-                "before_image_path, after_image_path) VALUES(?,?,?,?,?,?,?)",
-                (title, before_text, after_text, price, img_path or "", b, a))
+                "before_image_path, after_image_path, category) VALUES(?,?,?,?,?,?,?,?)",
+                (title, before_text, after_text, price, img_path or "", b, a, category))
+    # Автозаполнение текстов «До»/«После», если поля оставлены пустыми
+    with db.db() as conn:
+        for r in conn.execute("SELECT id, title, before_text, after_text FROM gallery_items").fetchall():
+            bt = (r["before_text"] or "").strip()
+            at = (r["after_text"] or "").strip()
+            nbt, nat = _clean_work_texts(bt, at, r["title"])
+            if (nbt, nat) != (bt, at):
+                conn.execute("UPDATE gallery_items SET before_text=?, after_text=? WHERE id=?",
+                             (nbt, nat, r["id"]))
     return redirect("/admin/gallery")
+
+
+def _clean_work_texts(before: str, after: str, title: str) -> tuple[str, str]:
+    """Нормализуем подписи работ в галерее.
+
+    1. Срезаем дублирующиеся префиксы «До:» / «После:» из текстов — на витрине
+       они и так показаны плашками-метками.
+    2. Текст после, начинающийся со срока («Готово через…», «Срок — …»),
+       помечаем меткой «Срок:» вместо бессмысленного «После».
+    3. Пустые поля заполняем подсказками по названию работы.
+    """
+    import re
+    before = re.sub(r"^\s*до\s*[::]\s*", "", before, flags=re.I).strip()
+    after = re.sub(r"^\s*после\s*[::]\s*", "", after, flags=re.I).strip()
+    if after and not after.startswith("Срок"):
+        m = re.match(r"^готово\s+через\s+(.+)$", after, flags=re.I)
+        if m:
+            after = f"Срок — {m.group(1)}"
+        elif re.match(r"^срок\b", after, flags=re.I):
+            after = "Срок" + after[4:]
+    return before, after
 
 
 @app.post("/admin/gallery/migrate")
@@ -483,6 +536,10 @@ SETTING_FIELDS = [
     ("manager_quote", "Цитата заведующей (блок «Лицо ателье»)"),
     ("manager_photo", "Фото заведующей (блок «Лицо ателье»)"),
     ("hero_image", "Фоновое фото первого экрана (желательно ≥1600px)"),
+    ("dir_img_meh", "Фото карточки «Меховое ателье» (блок «Что мы делаем»)"),
+    ("dir_img_kozha", "Фото карточки «Кожа и дублёнки»"),
+    ("dir_img_poshiv", "Фото карточки «Верхняя одежда и лёгкое платье»"),
+    ("dir_img_remont", "Фото карточки «Ремонт и трикотаж»"),
     ("manager_name", "Имя руководителя"),
     ("manager_role", "Должность руководителя"),
     ("manager_note", "Примечание о руководителе"),
@@ -495,7 +552,8 @@ SETTING_FIELDS = [
 ]
 
 # настройки-картинки: сохраняются через загрузку файла, а не текстовым полем
-IMAGE_SETTINGS = {"manager_photo", "hero_image"}
+IMAGE_SETTINGS = {"manager_photo", "hero_image",
+                  "dir_img_meh", "dir_img_kozha", "dir_img_poshiv", "dir_img_remont"}
 
 
 @app.get("/admin/settings", response_class=HTMLResponse)
