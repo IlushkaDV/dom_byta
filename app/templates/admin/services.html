@@ -1,0 +1,74 @@
+{% extends "admin/base_admin.html" %}
+{% set page = 'services' %}
+{% block heading %}Услуги и цены{% endblock %}
+{% block content %}
+
+<div class="panel">
+  <div class="panel-head">
+    <h2>Список услуг ({{ services | length }})</h2>
+    <button class="btn btn-gold btn-sm" data-open="svcModal" onclick="resetSvc()">＋ Добавить услугу</button>
+  </div>
+  <table>
+    <thead><tr><th>Порядок</th><th>Категория</th><th>Название</th><th>Цена</th><th>Статус</th><th>Действия</th></tr></thead>
+    <tbody>
+      {% for srv in services %}
+      <tr>
+        <td>{{ srv.sort_order }}</td>
+        <td><span class="badge badge-off">{{ srv.category }}</span></td>
+        <td><b>{{ srv.title }}</b><br><small style="color:#8a8174">{{ srv.description[:90] }}</small></td>
+        <td style="white-space:nowrap"><b>{{ srv.price }}</b></td>
+        <td>{% if srv.is_active %}<span class="badge badge-on">Активна</span>{% else %}<span class="badge badge-off">Скрыта</span>{% endif %}</td>
+        <td style="white-space:nowrap">
+          <button class="btn btn-sm" data-open="svcModal" data-edit='{{ srv | tojson }}' onclick="fillSvc(this)">✏️ Изменить</button>
+          <form method="post" action="/admin/services/{{ srv.id }}/delete" data-confirm="Удалить услугу «{{ srv.title }}»?" style="display:inline">
+            <button class="btn btn-danger" type="submit">Удалить</button>
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<!-- Модалка добавления/редактирования -->
+<div class="modal-backdrop" id="svcModal">
+  <div class="modal">
+    <button type="button" class="modal-close">×</button>
+    <h2 id="svcTitle">Новая услуга</h2>
+    <form method="post" action="/admin/services/save" id="svcForm">
+      <input type="hidden" name="id" value="0">
+      <div class="form-grid">
+        <div class="field full"><label>Название *</label><input type="text" name="title" required placeholder="Например: Пошив шубы по меркам"></div>
+        <div class="field full"><label>Описание</label><textarea name="description" placeholder="Краткое описание услуги"></textarea></div>
+        <div class="field"><label>Цена</label><input type="text" name="price" placeholder="от 5 000 ₽"></div>
+        <div class="field"><label>Категория</label>
+          <select name="category">
+            <option>Пошив</option><option>Реставрация</option><option>Ремонт</option><option>Другое</option>
+          </select>
+        </div>
+        <div class="field"><label>Порядок сортировки</label><input type="number" name="sort_order" value="0"></div>
+        <div class="field" style="display:flex;align-items:end;padding-bottom:6px">
+          <label class="checkbox"><input type="checkbox" name="is_active" value="1" checked> Отображать на сайте</label>
+        </div>
+      </div>
+      <div class="form-actions">
+        <button class="btn btn-gold" type="submit">Сохранить</button>
+        <button class="btn" type="button" onclick="this.closest('.modal-backdrop').classList.remove('open')">Отмена</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+function resetSvc() {
+  document.getElementById('svcTitle').textContent = 'Новая услуга';
+  const f = document.getElementById('svcForm');
+  f.querySelector('[name=id]').value = 0;
+  f.reset();
+}
+function fillSvc(btn) {
+  document.getElementById('svcTitle').textContent = 'Редактирование услуги';
+}
+</script>
+
+{% endblock %}

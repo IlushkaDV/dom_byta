@@ -1,0 +1,30 @@
+{% extends "admin/base_admin.html" %}
+{% set page = 'settings' %}
+{% block heading %}Настройки сайта{% endblock %}
+{% block content %}
+
+<div class="panel">
+  <h2>Контент публичного сайта</h2>
+  <p style="color:#8a8174;font-size:13.5px;margin-bottom:20px">Изменения сразу отображаются на сайте после сохранения.</p>
+  <form method="post" action="/admin/settings">
+    <div class="form-grid">
+      {% for key, label in fields %}
+      <div class="field {% if key in ('about_text','hero_subtitle') %}full{% endif %}">
+        <label>{{ label }}</label>
+        {% if key in ('about_text',) %}
+          <textarea name="{{ key }}" rows="8">{{ s.get(key, '') }}</textarea>
+        {% elif key in ('hero_subtitle',) %}
+          <textarea name="{{ key }}" rows="3">{{ s.get(key, '') }}</textarea>
+        {% else %}
+          <input type="text" name="{{ key }}" value="{{ s.get(key, '') }}">
+        {% endif %}
+      </div>
+      {% endfor %}
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-gold" type="submit">Сохранить настройки</button>
+    </div>
+  </form>
+</div>
+
+{% endblock %}
