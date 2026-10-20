@@ -547,19 +547,18 @@ img.manager-photo {
 .hero-thread .spool path { stroke: rgba(217,184,124,.7); stroke-width: 1.6; }
 @media (max-width: 1024px) { .hero-thread { display: none; } }
 
-/* ===== Нить через всю страницу (нить остаётся на экране и шьется вниз при прокрутке) ===== */
+/* ===== Нить через ВСЮ страницу: полотно от шапки до подвала, игла бежит по скроллу ===== */
 .page-thread {
-  position: fixed; top: 0; left: 0; z-index: 3;
-  width: 100vw; height: 100vh;
+  position: absolute; top: 0; left: 0; z-index: 2;
   pointer-events: none; overflow: visible;
 }
 .thread-stitch {
-  stroke: var(--gold-light); stroke-width: 2; fill: none;
-  stroke-dasharray: 7 9; stroke-linecap: round; opacity: .75;
+  stroke: var(--gold-light); stroke-width: 2.4; fill: none;
+  stroke-dasharray: 8 10; stroke-linecap: round; opacity: .55;
 }
 #pageThreadPath { visibility: hidden; }
 .thread-needle {
-  stroke: var(--gold-light); stroke-width: 1.8; fill: rgba(246,241,232,.12);
+  stroke: var(--gold-light); stroke-width: 1.8; fill: rgba(246,241,232,.15);
   opacity: 0; transition: opacity .3s;
 }
 @media (max-width: 768px) {

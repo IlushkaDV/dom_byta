@@ -254,24 +254,24 @@
     updateThread();
   }
 
-  /* ---- Нить через всю страницу: игла и стежки всегда на экране, нить шьется вниз при прокрутке ---- */
+  /* ---- Нить через всю страницу: полотно от шапки до подвала, игла бежит при прокрутке ---- */
   const pageThreadSvg = document.querySelector(".page-thread");
   const pageThreadPath = document.getElementById("pageThreadPath");
   const pageThreadNeedle = document.getElementById("pageThreadNeedle");
   if (pageThreadSvg && pageThreadPath) {
-    const HEADER_H = 84, MARGIN_R = 36, WAVE_AMP = 26, WAVE_STEP = 90;
-    let maxScroll = 1, raf = null, x0 = 0, yStart = 0, yEnd = 0;
+    const HEADER_H = 96, MARGIN_R = 44, WAVE_AMP = 30, WAVE_STEP = 110;
+    let docH = 1, raf = null, x0 = 0, yStart = 0, yEnd = 0;
 
     function setup() {
       const vh = innerHeight;
-      // SVG фиксирован на весь экран — координаты всегда в видимой области
-      pageThreadSvg.setAttribute("width", String(innerWidth));
-      pageThreadSvg.setAttribute("height", String(vh));
-      pageThreadSvg.setAttribute("viewBox", `0 0 ${innerWidth} ${vh}`);
-      x0 = Math.max(innerWidth - MARGIN_R, innerWidth * .5 + 120);
-      yStart = HEADER_H + 10;
-      yEnd = Math.max(yStart + 40, vh - 40);
-      maxScroll = Math.max(document.documentElement.scrollHeight - vh, 1);
+      docH = Math.max(document.documentElement.scrollHeight, vh);
+      // SVG-полотно на всю высоту документа — нить реально идёт через всю страницу
+      pageThreadSvg.style.width = innerWidth + "px";
+      pageThreadSvg.style.height = docH + "px";
+      pageThreadSvg.setAttribute("viewBox", `0 0 ${innerWidth} ${docH}`);
+      x0 = Math.max(innerWidth - MARGIN_R, innerWidth * .5 + 160);
+      yStart = HEADER_H + 20;
+      yEnd = docH - 40;
     }
 
     // волнистая линия от yStart до yTo (зигзаг из квадратных кривых)
@@ -289,9 +289,12 @@
 
     function updatePageThread() {
       raf = null;
+      const vh = innerHeight;
+      const maxScroll = Math.max(docH - vh, 1);
       const p = Math.min(1, Math.max(0, scrollY / maxScroll));
-      const yCur = yStart + (yEnd - yStart) * p;
-      const d = wavePath(yCur);
+      // игла всегда в нижней трети видимого окна — создаётся эффект, что она «шьёт» по ходу скролла
+      const needleY = Math.min(scrollY + vh * .7, yEnd);
+      const d = wavePath(needleY);
       if (d) {
         pageThreadPath.setAttribute("d", d);
         pageThreadPath.style.visibility = "visible";
@@ -300,7 +303,7 @@
         pageThreadPath.style.visibility = "hidden";
       }
       if (pageThreadNeedle) {
-        pageThreadNeedle.setAttribute("transform", `translate(${x0},${yCur.toFixed(1)})`);
+        pageThreadNeedle.setAttribute("transform", `translate(${x0},${needleY.toFixed(1)})`);
         pageThreadNeedle.style.opacity = p > .002 ? "1" : "0";
       }
     }
