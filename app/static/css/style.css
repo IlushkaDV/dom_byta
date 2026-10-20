@@ -547,9 +547,10 @@ img.manager-photo {
 .hero-thread .spool path { stroke: rgba(217,184,124,.7); stroke-width: 1.6; }
 @media (max-width: 1024px) { .hero-thread { display: none; } }
 
-/* ===== Нить через всю страницу (игла стартует от шапки, стежки тянутся при прокрутке) ===== */
+/* ===== Нить через всю страницу (нить остаётся на экране и шьется вниз при прокрутке) ===== */
 .page-thread {
-  position: absolute; top: 0; left: 0; z-index: 2;
+  position: fixed; top: 0; left: 0; z-index: 3;
+  width: 100vw; height: 100vh;
   pointer-events: none; overflow: visible;
 }
 .thread-stitch {

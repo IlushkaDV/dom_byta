@@ -254,7 +254,7 @@
     updateThread();
   }
 
-  /* ---- Нить через всю страницу: игла в шапке, нить шьется вниз при прокрутке ---- */
+  /* ---- Нить через всю страницу: игла и стежки всегда на экране, нить шьется вниз при прокрутке ---- */
   const pageThreadSvg = document.querySelector(".page-thread");
   const pageThreadPath = document.getElementById("pageThreadPath");
   const pageThreadNeedle = document.getElementById("pageThreadNeedle");
@@ -263,14 +263,15 @@
     let maxScroll = 1, raf = null, x0 = 0, yStart = 0, yEnd = 0;
 
     function setup() {
-      const h = document.documentElement.scrollHeight;
-      pageThreadSvg.setAttribute("width", "100%");
-      pageThreadSvg.setAttribute("height", String(h));
-      pageThreadSvg.setAttribute("viewBox", `0 0 ${innerWidth} ${h}`);
+      const vh = innerHeight;
+      // SVG фиксирован на весь экран — координаты всегда в видимой области
+      pageThreadSvg.setAttribute("width", String(innerWidth));
+      pageThreadSvg.setAttribute("height", String(vh));
+      pageThreadSvg.setAttribute("viewBox", `0 0 ${innerWidth} ${vh}`);
       x0 = Math.max(innerWidth - MARGIN_R, innerWidth * .5 + 120);
       yStart = HEADER_H + 10;
-      yEnd = Math.max(yStart + 40, h - 40);
-      maxScroll = Math.max(h - innerHeight, 1);
+      yEnd = Math.max(yStart + 40, vh - 40);
+      maxScroll = Math.max(document.documentElement.scrollHeight - vh, 1);
     }
 
     // волнистая линия от yStart до yTo (зигзаг из квадратных кривых)
