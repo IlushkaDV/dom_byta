@@ -250,18 +250,40 @@ def admin_gallery(request: Request, admin: str = Depends(require_admin)):
     })
 
 
+async def _pick_upload(request_data, name: str) -> str | None:
+    """Сохранить загруженное фото; None — если файл не выбран (пустой input)."""
+    val = (request_data or {}).get(name)
+    if val is None or isinstance(val, str):
+        return None
+    filename = getattr(val, "filename", "") or ""
+    if not filename:
+        return None
+    ext = os.path.splitext(filename)[1].lower()
+    if ext not in ALLOWED_IMAGE_EXT:
+        return None
+    fname = f"{secrets.token_hex(8)}{ext}"
+    path = os.path.join(UPLOAD_DIR, fname)
+    with open(path, "wb") as out:
+        shutil.copyfileobj(val.file, out)
+    return f"/static/uploads/{fname}"
+
+
 @app.post("/admin/gallery/save")
-def admin_gallery_save(
+async def admin_gallery_save(
+    request: Request,
     admin: str = Depends(require_admin),
-    id: int = Form(0), title: str = Form(...), before_text: str = Form(""),
-    after_text: str = Form(""), price: str = Form(""), image: UploadFile | None = File(None),
-    before_image: UploadFile | None = File(None), after_image: UploadFile | None = File(None),
 ):
-    if not title.strip():
+    form = await request.form()
+    title = (form.get("title") or "").strip()
+    if not title:
         raise HTTPException(400, "Название обязательно")
-    img_path = _save_upload(image) if image else None
-    before_path = _save_upload(before_image) if before_image else None
-    after_path = _save_upload(after_image) if after_image else None
+    id = int(form.get("id") or 0)
+    before_text = form.get("before_text") or ""
+    after_text = form.get("after_text") or ""
+    price = form.get("price") or ""
+    img_path = await _pick_upload(form, "image")
+    before_path = await _pick_upload(form, "before_image")
+    after_path = await _pick_upload(form, "after_image")
     with db.db() as conn:
         if id:
             row = conn.execute("SELECT * FROM gallery_items WHERE id=?", (id,)).fetchone()
@@ -270,15 +292,43 @@ def admin_gallery_save(
             new_img = img_path if img_path is not None else row["image_path"]
             new_before = before_path if before_path is not None else row["before_image_path"]
             new_after = after_path if after_path is not None else row["after_image_path"]
+            # обратная совместимость: одно «общее» фото подставляется в пустые слоты до/после
+            if not new_before and not new_after and new_img:
+                new_before, new_after = new_img, new_img
             conn.execute(
                 "UPDATE gallery_items SET title=?, before_text=?, after_text=?, price=?, "
                 "image_path=?, before_image_path=?, after_image_path=? WHERE id=?",
                 (title, before_text, after_text, price, new_img, new_before, new_after, id))
         else:
+            b = before_path or ""
+            a = after_path or ""
+            if not b and not a and img_path:
+                b = a = img_path
             conn.execute(
                 "INSERT INTO gallery_items(title, before_text, after_text, price, image_path, "
                 "before_image_path, after_image_path) VALUES(?,?,?,?,?,?,?)",
-                (title, before_text, after_text, price, img_path or "", before_path or "", after_path or ""))
+                (title, before_text, after_text, price, img_path or "", b, a))
+    return redirect("/admin/gallery")
+
+
+@app.post("/admin/gallery/migrate")
+def admin_gallery_migrate(admin: str = Depends(require_admin)):
+    """Разово перенести старые одиночные фото в слоты «До»/«После»."""
+    moved = 0
+    with db.db() as conn:
+        rows = conn.execute(
+            "SELECT id, image_path, before_image_path, after_image_path FROM gallery_items"
+        ).fetchall()
+        for r in rows:
+            b, a = r["before_image_path"] or "", r["after_image_path"] or ""
+            img = r["image_path"] or ""
+            if img and (not b or not a):
+                nb = b or img
+                na = a or img
+                if (nb, na) != (b, a):
+                    conn.execute("UPDATE gallery_items SET before_image_path=?, after_image_path=? WHERE id=?",
+                                 (nb, na, r["id"]))
+                    moved += 1
     return redirect("/admin/gallery")
 
 

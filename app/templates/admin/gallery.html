@@ -6,7 +6,14 @@
 <div class="panel">
   <div class="panel-head">
     <h2>Работы ({{ items | length }})</h2>
-    <button class="btn btn-gold btn-sm" data-open="galModal" onclick="resetGal()">＋ Добавить работу</button>
+    <div style="display:flex;gap:8px">
+      {% if items | selectattr('image_path') | rejectattr('before_image_path') | list or items | selectattr('image_path') | selectattr('before_image_path') | rejectattr('after_image_path') | list %}
+      <form method="post" action="/admin/gallery/migrate" style="display:inline">
+        <button class="btn btn-sm" type="submit" title="Перенести старые одиночные фото в слоты «До»/«После», чтобы появился слайдер сравнения">⟳ Перенести старые фото</button>
+      </form>
+      {% endif %}
+      <button class="btn btn-gold btn-sm" data-open="galModal" onclick="resetGal()">＋ Добавить работу</button>
+    </div>
   </div>
   <table>
     <thead><tr><th>Фото «До»</th><th>Фото «После»</th><th>Название</th><th>До</th><th>После</th><th>Цена</th><th>Действия</th></tr></thead>
@@ -43,12 +50,14 @@
         <div class="field full"><label>Что стало (после)</label><textarea name="after_text" placeholder="Результат, срок выполнения"></textarea></div>
         <div class="field"><label>Цена</label><input type="text" name="price" placeholder="2 000 ₽"></div>
         <div class="field"><label>Фото «До»</label>
+          <img id="curBefore" class="thumb" src="" alt="" style="display:none;margin-bottom:6px">
           <input type="file" name="before_image" accept="image/*" style="padding-top:16px">
-          <small class="hint" data-for="before_image"></small>
+          <small class="hint">Если пустое — сохранится текущее фото</small>
         </div>
         <div class="field"><label>Фото «После»</label>
+          <img id="curAfter" class="thumb" src="" alt="" style="display:none;margin-bottom:6px">
           <input type="file" name="after_image" accept="image/*" style="padding-top:16px">
-          <small class="hint" data-for="after_image"></small>
+          <small class="hint">Если пустое — сохранится текущее фото</small>
         </div>
       </div>
       <div class="form-actions">
@@ -64,7 +73,19 @@ function resetGal() {
   const f = document.getElementById('galForm');
   f.querySelector('[name=id]').value = 0;
   f.reset();
+  document.getElementById('curBefore').style.display = 'none';
+  document.getElementById('curAfter').style.display = 'none';
 }
+document.querySelectorAll('[data-edit]').forEach(function (btn) {
+  btn.addEventListener('click', function () {
+    const g = JSON.parse(btn.dataset.edit);
+    const cb = document.getElementById('curBefore'), ca = document.getElementById('curAfter');
+    const bPath = g.before_image_path || g.image_path || '';
+    const aPath = g.after_image_path || g.image_path || '';
+    cb.src = bPath; cb.style.display = bPath ? '' : 'none';
+    ca.src = aPath; ca.style.display = aPath ? '' : 'none';
+  });
+});
 </script>
 
 {% endblock %}
