@@ -192,6 +192,67 @@
     }, { rootMargin: "-45% 0px -50% 0px" });
     sections.forEach(s => sio.observe(s));
   }
+
+  /* ---- Игла с ниткой: прошивает «строчку» перед футером при прокрутке ---- */
+  const seam = document.querySelector(".seam");
+  const seamNeedle = seam && seam.querySelector(".seam-needle");
+  const seamStitch = seam && seam.querySelector(".seam-stitch");
+  if (seam && seamNeedle && seamStitch && !prefersReduced) {
+    const pathLen = seamStitch.getTotalLength();
+    seamStitch.style.strokeDasharray = "10 8";
+    // маска: строчка проявляется по мере движения иглы
+    const maskId = "seamMask";
+    const svgNS = "http://www.w3.org/2000/svg";
+    const defs = document.createElementNS(svgNS, "defs");
+    const mask = document.createElementNS(svgNS, "mask");
+    mask.setAttribute("id", maskId);
+    const maskRect = document.createElementNS(svgNS, "rect");
+    maskRect.setAttribute("x", "0"); maskRect.setAttribute("y", "0");
+    maskRect.setAttribute("height", "100%"); maskRect.setAttribute("width", "0");
+    maskRect.setAttribute("fill", "#fff");
+    mask.appendChild(maskRect);
+    defs.appendChild(mask);
+    seamStitch.parentElement.insertBefore(defs, seamStitch);
+    seamStitch.setAttribute("mask", `url(#${maskId})`);
+    let raf = null;
+    const updateSeam = () => {
+      if (raf) return;
+      raf = requestAnimationFrame(() => {
+        raf = null;
+        const r = seam.getBoundingClientRect();
+        const vh = innerHeight;
+        // p: 0 → секция снизу экрана, 1 → секция ушла за верх
+        const p = Math.min(1, Math.max(0, (vh - r.top) / (vh + r.height)));
+        const vbW = 1200;
+        const x = p * vbW;
+        maskRect.setAttribute("width", String(x));
+        // позиция иглы — на волнистой линии (path.getPointAtLength)
+        const pt = seamStitch.getPointAtLength(p * pathLen);
+        const scaleX = r.width / vbW;
+        seamNeedle.style.transform =
+          `translate(${pt.x * scaleX}px, ${pt.y - 22}px) rotate(${Math.sin(p * Math.PI * 6) * 12 - 30}deg)`;
+      });
+    };
+    addEventListener("scroll", updateSeam, { passive: true });
+    addEventListener("resize", updateSeam);
+    updateSeam();
+  } else if (seam && seamStitch) {
+    seamStitch.style.opacity = ".85";
+  }
+
+  /* ---- Hero: нить «разматывается» с бобины при прокрутке ---- */
+  const thread = document.getElementById("threadPath");
+  if (thread) {
+    const len = thread.getTotalLength();
+    thread.style.strokeDasharray = len;
+    const updateThread = () => {
+      const max = heroEl ? heroEl.offsetHeight : innerHeight;
+      const p = Math.min(1, scrollY / Math.max(max * .7, 1));
+      thread.style.strokeDashoffset = String(len * (1 - p));
+    };
+    addEventListener("scroll", updateThread, { passive: true });
+    updateThread();
+  }
 })();
 
 /* ---------- Before/After слайдер в галерее ---------- */

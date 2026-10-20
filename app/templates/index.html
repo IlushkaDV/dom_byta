@@ -20,6 +20,15 @@
       <a href="#order" class="btn btn-primary magnetic">Оставить заявку</a>
       <a href="#services" class="btn btn-ghost">Услуги и цены</a>
     </div>
+    <!-- декор: бобина с ниткой, нить «разматывается» при прокрутке -->
+    <svg class="hero-thread" viewBox="0 0 900 420" fill="none" aria-hidden="true">
+      <path id="threadPath" d="M60,380 C180,300 120,180 260,150 S420,240 520,160 S700,60 860,40"/>
+      <g class="spool">
+        <rect x="34" y="356" width="52" height="48" rx="8"/>
+        <line x1="34" y1="364" x2="86" y2="364"/><line x1="34" y1="396" x2="86" y2="396"/>
+        <path d="M44 368v28M54 366v32M64 366v32M74 368v28"/>
+      </g>
+    </svg>
     <div class="hero-stats reveal reveal-d4">
       <div><b class="counter" data-count="30">0</b><span>лет опыта мастеров</span></div>
       <div><b class="counter" data-count="5000">0</b><span>изделий пошито</span></div>
@@ -41,7 +50,11 @@
   <div class="container about-grid">
     <div class="about-media reveal">
       <div class="about-frame">
+        {% if s.manager_photo %}
+        <img class="about-img about-photo" src="{{ s.manager_photo }}" alt="{{ s.manager_name }} — {{ s.manager_role }}">
+        {% else %}
         <div class="about-img" role="img" aria-label="Ателье"></div>
+        {% endif %}
         <div class="about-year"><b>с 1998</b><span>года в центре Хабаровска</span></div>
       </div>
     </div>
@@ -76,6 +89,7 @@
     <div class="adv-grid">
       {% for a in advantages %}
       <article class="adv-card tilt reveal" data-delay="{{ loop.index0 % 3 * 100 }}">
+        <div class="adv-stitch" aria-hidden="true"></div>
         <div class="adv-icon">{{ a.icon }}</div>
         <h3>{{ a.title }}</h3>
         <p>{{ a.text }}</p>
@@ -157,9 +171,17 @@
           <img src="{{ g.image_path }}" alt="{{ g.title }}" loading="lazy">
           {% else %}
           <div class="work-placeholder" aria-hidden="true">
-            <span class="work-before-tag">До</span>
-            <svg viewBox="0 0 64 64" width="72" height="72"><path d="M32 8c-8 10-18 16-18 28a18 18 0 0 0 36 0c0-12-10-18-18-28z" fill="none" stroke="currentColor" stroke-width="2.5"/><path d="M24 40a8 8 0 0 0 16 0" fill="none" stroke="currentColor" stroke-width="2.5"/></svg>
-            <span class="work-after-tag">После</span>
+            <svg viewBox="0 0 120 96" width="110" height="88" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+              <!-- фоторамка -->
+              <rect x="14" y="10" width="92" height="76" rx="6"/>
+              <circle cx="38" cy="32" r="8"/>
+              <path d="M14 66l26-22 20 16 16-12 30 24"/>
+              <!-- иголка с ниткой поверх -->
+              <path d="M84 14c6 8 10 18 8 30-1 6-5 10-9 12" stroke-dasharray="3 5"/>
+              <path d="M96 8l-14 34" stroke-width="2.6"/>
+              <circle cx="97" cy="6" r="2.6"/>
+            </svg>
+            <span class="ph-caption">Фото появится здесь<br><small>загрузите в админке → «Галерея»</small></span>
           </div>
           {% endif %}
         </div>
