@@ -1,0 +1,64 @@
+{% extends "admin/base_admin.html" %}
+{% set page = 'gallery' %}
+{% block heading %}Галерея работ{% endblock %}
+{% block content %}
+
+<div class="panel">
+  <div class="panel-head">
+    <h2>Работы ({{ items | length }})</h2>
+    <button class="btn btn-gold btn-sm" data-open="galModal" onclick="resetGal()">＋ Добавить работу</button>
+  </div>
+  <table>
+    <thead><tr><th>Фото</th><th>Название</th><th>До</th><th>После</th><th>Цена</th><th>Действия</th></tr></thead>
+    <tbody>
+      {% for g in items %}
+      <tr>
+        <td>{% if g.image_path %}<img class="thumb" src="{{ g.image_path }}" alt="">{% else %}<div class="thumb-placeholder">нет фото</div>{% endif %}</td>
+        <td><b>{{ g.title }}</b></td>
+        <td style="max-width:200px">{{ g.before_text[:80] }}</td>
+        <td style="max-width:200px">{{ g.after_text[:80] }}</td>
+        <td>{{ g.price or '—' }}</td>
+        <td style="white-space:nowrap">
+          <button class="btn btn-sm" data-open="galModal" data-edit='{{ g | tojson }}'>✏️ Изменить</button>
+          <form method="post" action="/admin/gallery/{{ g.id }}/delete" data-confirm="Удалить работу «{{ g.title }}»?" style="display:inline">
+            <button class="btn btn-danger" type="submit">Удалить</button>
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<div class="modal-backdrop" id="galModal">
+  <div class="modal">
+    <button type="button" class="modal-close">×</button>
+    <h2>Работа в галерее</h2>
+    <form method="post" action="/admin/gallery/save" enctype="multipart/form-data" id="galForm">
+      <input type="hidden" name="id" value="0">
+      <div class="form-grid">
+        <div class="field full"><label>Название *</label><input type="text" name="title" required placeholder="Например: Реставрация шубы"></div>
+        <div class="field full"><label>Что было (до)</label><textarea name="before_text" placeholder="Описание состояния до работы"></textarea></div>
+        <div class="field full"><label>Что стало (после)</label><textarea name="after_text" placeholder="Результат, срок выполнения"></textarea></div>
+        <div class="field"><label>Цена</label><input type="text" name="price" placeholder="2 000 ₽"></div>
+        <div class="field"><label>Фотография</label>
+          <input type="file" name="image" accept="image/*" style="padding-top:16px">
+        </div>
+      </div>
+      <div class="form-actions">
+        <button class="btn btn-gold" type="submit">Сохранить</button>
+        <button class="btn" type="button" onclick="this.closest('.modal-backdrop').classList.remove('open')">Отмена</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+function resetGal() {
+  const f = document.getElementById('galForm');
+  f.querySelector('[name=id]').value = 0;
+  f.reset();
+}
+</script>
+
+{% endblock %}

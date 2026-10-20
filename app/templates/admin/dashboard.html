@@ -1,0 +1,49 @@
+{% extends "admin/base_admin.html" %}
+{% set page = 'dashboard' %}
+{% block heading %}Дашборд{% endblock %}
+{% block content %}
+
+<div class="stat-grid">
+  <div class="stat-card gold"><b>{{ stats.orders_new }}</b><span>новых заявок</span></div>
+  <div class="stat-card"><b>{{ stats.orders_total }}</b><span>заявок всего</span></div>
+  <div class="stat-card"><b>{{ stats.services }}</b><span>активных услуг</span></div>
+  <div class="stat-card"><b>{{ stats.gallery }}</b><span>работ в галерее</span></div>
+  <div class="stat-card green"><b>{{ stats.reviews }}</b><span>публичных отзывов</span></div>
+</div>
+
+<div class="panel">
+  <div class="panel-head">
+    <h2>Последние заявки</h2>
+    <a href="/admin/orders" class="btn btn-sm">Все заявки →</a>
+  </div>
+  {% if recent_orders %}
+  <table>
+    <thead><tr><th>Дата</th><th>Клиент</th><th>Телефон</th><th>Услуга</th><th>Статус</th></tr></thead>
+    <tbody>
+      {% for o in recent_orders %}
+      <tr>
+        <td>{{ o.created_at[:16] }}</td>
+        <td><b>{{ o.name }}</b></td>
+        <td><a href="tel:{{ o.phone }}">{{ o.phone }}</a></td>
+        <td>{{ o.service or '—' }}</td>
+        <td><span class="badge badge-{{ o.status }}">{{ {'new':'Новая','in_progress':'В работе','done':'Завершена','cancelled':'Отклонена'}[o.status] }}</span></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <div class="empty">Заявок пока нет — они появятся здесь после отправки формы с сайта.</div>
+  {% endif %}
+</div>
+
+<div class="panel">
+  <h2>Быстрые действия</h2>
+  <div style="display:flex;gap:10px;flex-wrap:wrap">
+    <a data-open="addServiceModal" href="/admin/services" class="btn btn-gold btn-sm">＋ Добавить услугу</a>
+    <a data-open="addGalleryModal" href="/admin/gallery" class="btn btn-sm">＋ Добавить работу в галерею</a>
+    <a data-open="addReviewModal" href="/admin/reviews" class="btn btn-sm">＋ Добавить отзыв</a>
+    <a href="/admin/settings" class="btn btn-sm">⚙ Настройки сайта</a>
+  </div>
+</div>
+
+{% endblock %}
