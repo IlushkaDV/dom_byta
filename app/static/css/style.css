@@ -649,6 +649,14 @@ img.manager-photo {
 .footer a { transition: color .3s; }
 .footer a:hover { color: var(--gold-light); }
 .footer p, .footer-grid a { display: block; font-size: 14px; margin-bottom: 8px; }
+/* Ссылка «Услуги и цены» в футере — кнопка, должна выглядеть как обычная ссылка футера */
+.footer .nav-prices-link {
+  display: block; font-size: 14px; margin-bottom: 8px; padding: 0; border-radius: 0;
+  font-weight: inherit; background: none; border: none; color: inherit; cursor: pointer;
+  text-align: left; position: static; transition: color .3s;
+}
+.footer .nav-prices-link::after { content: none; }
+.footer .nav-prices-link:hover { color: var(--gold-light); }
 .footer-desc { color: var(--taupe); max-width: 38ch; margin-top: 16px; }
 .footer-note { color: var(--taupe); font-size: 12.5px; }
 .logo-footer .logo-mono { box-shadow: none; }
