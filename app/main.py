@@ -16,11 +16,57 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 UPLOAD_DIR = os.path.join(BASE_DIR, "static", "uploads")
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
-app = FastAPI(title="Меховое ателье «Дом Быта»")
+app = FastAPI(title="Ателье", docs_url=None, redoc_url=None, openapi_url=None)
 app.mount("/static", StaticFiles(directory=os.path.join(BASE_DIR, "static")), name="static")
 templates = Jinja2Templates(directory=os.path.join(BASE_DIR, "templates"))
 
 db.init_db()
+
+# ---------- базовые настройки безопасности ----------
+
+MAX_UPLOAD_BYTES = 15 * 1024 * 1024  # 15 МБ на файл
+
+
+def _security_headers(resp):
+    resp.headers.setdefault("X-Content-Type-Options", "nosniff")
+    resp.headers.setdefault("X-Frame-Options", "SAMEORIGIN")
+    resp.headers.setdefault("Referrer-Policy", "strict-origin-when-cross-origin")
+    resp.headers.setdefault(
+        "Permissions-Policy", "camera=(), microphone=(), geolocation=()")
+    return resp
+
+
+# ---------- защита от подбора пароля (rate limiting) ----------
+
+import time as _time
+from collections import defaultdict as _defaultdict
+
+_LOGIN_WINDOW = 15 * 60       # окно наблюдения, сек
+_LOGIN_MAX_FAILS = 8          # максимум неудачных попыток за окно
+_login_attempts: dict = _defaultdict(list)
+
+
+def _login_blocked(ip: str) -> bool:
+    now = _time.time()
+    attempts = [t for t in _login_attempts[ip] if now - t < _LOGIN_WINDOW]
+    _login_attempts[ip] = attempts
+    return len(attempts) >= _LOGIN_MAX_FAILS
+
+
+def _login_fail(ip: str) -> None:
+    _login_attempts[ip].append(_time.time())
+
+
+def _login_ok(ip: str) -> None:
+    _login_attempts.pop(ip, None)
+
+
+def _client_ip(request: Request) -> str:
+    # если сайт стоит за nginx — берём реальный IP из заголовка
+    fwd = request.headers.get("x-forwarded-for", "")
+    if fwd:
+        return fwd.split(",")[0].strip()
+    return request.client.host if request.client else "?"
 
 
 # ---------- helpers ----------
@@ -48,12 +94,16 @@ def redirect(url: str, flash: str | None = None) -> RedirectResponse:
 
 @app.middleware("http")
 async def flash_middleware(request: Request, call_next):
-    response = await call_next(request)
+    try:
+        response = await call_next(request)
+    except HTTPException as exc:
+        response = JSONResponse({"detail": exc.detail}, status_code=exc.status_code,
+                                headers=dict(exc.headers or {}))
     flash = request.cookies.get("atele_flash")
     if flash:
         response.delete_cookie("atele_flash")
         response.headers["x-flash"] = flash
-    return response
+    return _security_headers(response)
 
 
 # ---------- публичная часть ----------
@@ -138,7 +188,7 @@ def create_order(
         return redirect("/?sent=error#order")
     if not consent:  # без согласия на обработку ПД заявку не принимаем (152-ФЗ)
         return redirect("/?sent=noconsent#order")
-    ip = request.client.host if request.client else ""
+    ip = _client_ip(request)
     with db.db() as conn:
         conn.execute(
             "INSERT INTO orders(name, phone, email, service, message, "
@@ -161,13 +211,21 @@ def login_page(request: Request):
 
 @app.post("/admin/login")
 def login(request: Request, login_name: str = Form(...), password: str = Form(...)):
+    ip = _client_ip(request)
+    if _login_blocked(ip):
+        return templates.TemplateResponse(
+            request, "admin/login.html",
+            context={"error": "Слишком много неудачных попыток. Подождите 15 минут."},
+            status_code=429)
     with db.db() as conn:
         row = conn.execute("SELECT * FROM admins WHERE login=?", (login_name,)).fetchone()
     if not row or not verify_password(password, row["password_hash"]):
+        _login_fail(ip)
         return templates.TemplateResponse(
             request, "admin/login.html",
             context={"error": "Неверный логин или пароль"},
             status_code=401)
+    _login_ok(ip)
     resp = RedirectResponse("/admin", status_code=303)
     resp.set_cookie("atele_admin_session", make_session_token(login_name),
                     httponly=True, secure=request.url.scheme == "https",
@@ -345,7 +403,25 @@ async def admin_advantage_text_save(
 
 # ---------- админка: галерея ----------
 
-ALLOWED_IMAGE_EXT = {".jpg", ".jpeg", ".png", ".webp", ".gif", ".avif", ".svg"}
+ALLOWED_IMAGE_EXT = {".jpg", ".jpeg", ".png", ".webp", ".gif", ".avif"}
+
+
+def _validate_image_bytes(raw: bytes, ext: str) -> bool:
+    """Проверить, что содержимое файла действительно является картинкой.
+
+    Дополнительно запрещаем SVG (защита от XSS через встроенные скрипты)."""
+    if ext == ".svg":
+        return False
+    if not raw or len(raw) > MAX_UPLOAD_BYTES:
+        return False
+    try:
+        import io
+        from PIL import Image
+        img = Image.open(io.BytesIO(raw))
+        img.verify()
+        return True
+    except Exception:
+        return False
 
 
 def _save_upload(file: UploadFile) -> str | None:
@@ -354,10 +430,13 @@ def _save_upload(file: UploadFile) -> str | None:
     ext = os.path.splitext(file.filename)[1].lower()
     if ext not in ALLOWED_IMAGE_EXT:
         return None
+    raw = file.file.read()
+    if not _validate_image_bytes(raw, ext):
+        return None
     fname = f"{secrets.token_hex(8)}{ext}"
     path = os.path.join(UPLOAD_DIR, fname)
     with open(path, "wb") as out:
-        shutil.copyfileobj(file.file, out)
+        out.write(raw)
     return f"/static/uploads/{fname}"
 
 
@@ -381,10 +460,13 @@ async def _pick_upload(request_data, name: str) -> str | None:
     ext = os.path.splitext(filename)[1].lower()
     if ext not in ALLOWED_IMAGE_EXT:
         return None
+    raw = await val.read()
+    if not _validate_image_bytes(raw, ext):
+        return None
     fname = f"{secrets.token_hex(8)}{ext}"
     path = os.path.join(UPLOAD_DIR, fname)
     with open(path, "wb") as out:
-        shutil.copyfileobj(val.file, out)
+        out.write(raw)
     return f"/static/uploads/{fname}"
 
 
