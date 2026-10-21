@@ -47,10 +47,27 @@
   window.addEventListener("scroll", onScroll, { passive: true });
   onScroll();
 
-  /* ---------- Burger ---------- */
+  /* ---------- Burger / mobile menu ---------- */
   const burger = $("#burger");
-  if (burger && header) burger.addEventListener("click", () => header.classList.toggle("open"));
-  $$("#mobileMenu a").forEach(a => a.addEventListener("click", () => header && header.classList.remove("open")));
+  const mobileMenu = $("#mobileMenu");
+  const setMenu = (open) => {
+    if (!mobileMenu || !burger) return;
+    mobileMenu.classList.toggle("open", open);
+    burger.classList.toggle("open", open);
+    document.body.classList.toggle("menu-open", open);
+    mobileMenu.setAttribute("aria-hidden", String(!open));
+  };
+  if (burger && mobileMenu) {
+    burger.addEventListener("click", () => setMenu(!mobileMenu.classList.contains("open")));
+    // закрытие по клику на любую ссылку/кнопку внутри меню
+    mobileMenu.querySelectorAll("a, button").forEach(el =>
+      el.addEventListener("click", () => setMenu(false))
+    );
+    // закрытие по Esc
+    document.addEventListener("keydown", e => { if (e.key === "Escape") setMenu(false); });
+    // при возврате на десктоп — сбросить состояние
+    window.addEventListener("resize", () => { if (window.innerWidth > 1024) setMenu(false); });
+  }
 
   /* ---------- Reveal on scroll ---------- */
   const io = new IntersectionObserver(entries => {
