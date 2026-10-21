@@ -19,6 +19,7 @@
 
   /* ---------- Header scroll state ---------- */
   const header = $("#header");
+  const heroBg = document.querySelector(".hero-bg[data-focus]");
   const onScroll = () => {
     if (header) header.classList.toggle("scrolled", window.scrollY > 40);
     // parallax
@@ -29,6 +30,20 @@
       });
     }
   };
+  /* На телефонах background-size:cover сильно обрезает широкие фото —
+     смещаем «правильную» область к центру кадра */
+  const setHeroFocus = () => {
+    if (!heroBg) return;
+    if (window.innerWidth <= 640) {
+      heroBg.style.setProperty("--hero-pos", "center 38%");
+      heroBg.style.backgroundSize = "auto 115%";
+    } else {
+      heroBg.style.removeProperty("--hero-pos");
+      heroBg.style.backgroundSize = "";
+    }
+  };
+  window.addEventListener("resize", setHeroFocus, { passive: true });
+  setHeroFocus();
   window.addEventListener("scroll", onScroll, { passive: true });
   onScroll();
 

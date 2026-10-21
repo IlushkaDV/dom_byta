@@ -130,12 +130,18 @@ button { font-family: inherit; cursor: pointer; }
 }
 .hero-bg {
   position: absolute; inset: -10% 0; z-index: 0;
+  background-size: cover; background-position: center top; background-repeat: no-repeat;
+}
+/* декоративный фон, если фото первого экрана не загружено */
+.hero-bg:not([style*="background-image"]) {
   background:
     radial-gradient(60% 50% at 20% 20%, rgba(185,138,68,.35), transparent 60%),
     radial-gradient(50% 60% at 85% 75%, rgba(217,184,124,.22), transparent 60%),
     repeating-linear-gradient(115deg, rgba(255,255,255,.028) 0 2px, transparent 2px 26px),
     linear-gradient(160deg, #211a12 0%, #17130f 55%, #1d1610 100%);
 }
+/* «правильная» область для фоновых фото на мобильных (заменой CSS-переменной в JS) */
+.hero-bg[data-focus] { background-position: var(--hero-pos, center top); }
 .hero-overlay { position: absolute; inset: 0; z-index: 1; pointer-events: none;
   background: linear-gradient(180deg, rgba(15,12,9,.62) 0%, rgba(15,12,9,.35) 45%, rgba(15,12,9,.72) 100%),
               radial-gradient(120% 90% at 50% 0%, transparent 55%, rgba(0,0,0,.45)); }
@@ -646,6 +652,14 @@ img.manager-photo {
 }
 @media (max-width: 640px) {
   .section { padding: 76px 0; }
+  /* Hero на телефонах: меньше отступы, компактнее типографика */
+  .hero-content { padding: 118px 0 96px; }
+  .hero-title { font-size: clamp(27px, 7.4vw, 38px); line-height: 1.16; max-width: none; margin-bottom: 18px; }
+  .hero-kicker { font-size: 10.5px; letter-spacing: .16em; margin-bottom: 12px; }
+  .hero-sub { font-size: 15px; line-height: 1.65; margin-bottom: 26px; }
+  .hero-actions { gap: 10px; margin-bottom: 34px; }
+  .hero-actions .btn { padding: 13px 22px; font-size: 14px; }
+  .scroll-hint { display: none; }
   .adv-grid, .gallery-grid, .contacts-cards { grid-template-columns: 1fr; }
   .dir-card-body { padding: 26px 20px 24px; }
   .review-card { flex-basis: 100%; }
