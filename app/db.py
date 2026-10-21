@@ -326,6 +326,15 @@ def init_db() -> None:
         if "category" not in cols:
             conn.execute("ALTER TABLE gallery_items ADD COLUMN category TEXT NOT NULL DEFAULT ''")
 
+        # Миграция: согласие на обработку ПД (152-ФЗ) и данные визита в заявках
+        ocols = {r["name"] for r in conn.execute("PRAGMA table_info(orders)")}
+        if "pd_consent_at" not in ocols:
+            conn.execute("ALTER TABLE orders ADD COLUMN pd_consent_at TEXT NOT NULL DEFAULT ''")
+        if "visit_date" not in ocols:
+            conn.execute("ALTER TABLE orders ADD COLUMN visit_date TEXT NOT NULL DEFAULT ''")
+        if "visit_time" not in ocols:
+            conn.execute("ALTER TABLE orders ADD COLUMN visit_time TEXT NOT NULL DEFAULT ''")
+
         # Заполняем категорию у старых работ без неё — по ключевым словам названия
         _cat_kw = [("Меховое ателье", ["шуб", "мех", "жилет"]),
                    ("Кожа и дублёнки", ["кож", "дублен", "дублён"]),

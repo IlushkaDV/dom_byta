@@ -25,7 +25,15 @@
           {% if o.email %}<br><a href="mailto:{{ o.email }}" style="font-size:12px;color:#8a8174">{{ o.email }}</a>{% endif %}
         </td>
         <td>{{ o.service or '—' }}</td>
-        <td style="max-width:260px">{{ o.message or '—' }}</td>
+        <td style="max-width:260px">
+          {% if o.visit_date or (o.visit_time and o.visit_time|default('')) %}
+          <div class="order-visit">📅 {{ o.visit_date or '' }}{% if o.visit_time %} в {{ o.visit_time }}{% endif %}</div>
+          {% endif %}
+          {{ o.message or '—' }}
+          {% if o.pd_consent_at and o.pd_consent_at|default('') %}
+          <div class="order-consent">Согласие на ПД: {{ o.pd_consent_at }}</div>
+          {% endif %}
+        </td>
         <td><span class="badge badge-{{ o.status }}">{{ status_labels[o.status] }}</span></td>
         <td>
           <form method="post" action="/admin/orders/{{ o.id }}/status" style="display:flex;gap:6px;margin-bottom:6px">

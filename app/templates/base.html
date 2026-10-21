@@ -14,7 +14,7 @@
   {% else %}
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧵</text></svg>">
   {% endif %}
-  <link rel="stylesheet" href="/static/css/style.css?v=20261021k">
+  <link rel="stylesheet" href="/static/css/style.css?v=20261021l">
 </head>
 <body>
 
@@ -86,8 +86,12 @@
     </div>
   </div>
   <div class="container footer-bottom">
-    <span>© {{ year | default(2026) }} Ателье в ТЦ «Дом Быта», Хабаровск</span>
-    <a href="/admin" class="footer-admin">Панель управления</a>
+    <span>© {{ year | default(2026) }} Ателье в ТЦ «Дом Быта», Хабаровск · <a href="/privacy" class="footer-privacy">Политика обработки персональных данных</a></span>
+    {% if admin is defined and admin %}
+    <a href="/admin/logout" class="footer-admin btn btn-sm">⚙ Панель управления — выйти</a>
+    {% else %}
+    <a href="/admin/login" class="footer-admin-link"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 3l7 3v5c0 4.4-3 8.4-7 9.8C8 19.4 5 15.4 5 11V6l7-3z"/><circle cx="12" cy="11" r="2.2"/><path d="M12 13.2V16"/></svg> Вход для сотрудников</a>
+    {% endif %}
   </div>
 
   <!-- ===== Разделитель: игла с ниткой прошивает «строчку» при прокрутке ===== -->

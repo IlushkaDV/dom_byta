@@ -2,6 +2,7 @@
 import os
 import secrets
 import shutil
+from datetime import datetime
 
 from fastapi import FastAPI, Form, Request, UploadFile, File, Depends, HTTPException
 from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
@@ -126,16 +127,25 @@ def index(request: Request):
 
 @app.post("/order")
 def create_order(
+    request: Request,
     name: str = Form(...), phone: str = Form(...), email: str = Form(""),
     service: str = Form(""), message: str = Form(""),
+    visit_date: str = Form(""), visit_time: str = Form(""),
+    consent: str = Form(""),
 ):
     name, phone = name.strip(), phone.strip()
     if not name or not phone:
-        return redirect("/?sent=error")
+        return redirect("/?sent=error#order")
+    if not consent:  # без согласия на обработку ПД заявку не принимаем (152-ФЗ)
+        return redirect("/?sent=noconsent#order")
+    ip = request.client.host if request.client else ""
     with db.db() as conn:
         conn.execute(
-            "INSERT INTO orders(name, phone, email, service, message) VALUES(?,?,?,?,?)",
-            (name, phone, email.strip(), service.strip(), message.strip()),
+            "INSERT INTO orders(name, phone, email, service, message, "
+            "visit_date, visit_time, pd_consent_at) VALUES(?,?,?,?,?,?,?,?)",
+            (name, phone, email.strip(), service.strip(), message.strip(),
+             visit_date.strip(), visit_time.strip(),
+             f"{datetime.now().strftime('%Y-%m-%d %H:%M')} с IP {ip}"),
         )
     return redirect("/?sent=ok#order")
 
@@ -160,8 +170,22 @@ def login(request: Request, login_name: str = Form(...), password: str = Form(..
             status_code=401)
     resp = RedirectResponse("/admin", status_code=303)
     resp.set_cookie("atele_admin_session", make_session_token(login_name),
-                    httponly=True, samesite="lax", max_age=60 * 60 * 12)
+                    httponly=True, secure=request.url.scheme == "https",
+                    samesite="lax", max_age=60 * 60 * 12)
     return resp
+
+
+# ---------- страница «Политика обработки персональных данных» (152-ФЗ) ----------
+
+POLICY_TITLE = "Политика обработки персональных данных"
+
+
+@app.get("/privacy", response_class=HTMLResponse)
+def privacy(request: Request):
+    s = db.get_all_settings()
+    return templates.TemplateResponse(request, "privacy.html", context={
+        "s": s, "policy_updated": "01.10.2026", "POLICY_TITLE": POLICY_TITLE,
+    })
 
 
 @app.get("/admin/logout")

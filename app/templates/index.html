@@ -296,11 +296,16 @@
       </label>
       <label>Комментарий<textarea name="message" rows="3" placeholder="Опишите задачу: что и из какого материала, сроки…"></textarea></label>
       <button class="btn btn-primary btn-block" type="submit">Записаться на консультацию</button>
-      <small class="form-note">Нажимая кнопку, вы соглашаетесь на обработку персональных данных.</small>
+      <label class="form-consent">
+        <input type="checkbox" name="consent" value="1" required>
+        <span>Я согласна с обработкой моих персональных данных в соответствии с <a href="/privacy" target="_blank" rel="noopener">Политикой обработки ПД</a> (152-ФЗ).</span>
+      </label>
       {% if request.query_params.get('sent') == 'ok' %}
       <div class="form-success show">✔ Спасибо! Заявка отправлена — мы скоро свяжемся с вами.</div>
       {% elif request.query_params.get('sent') == 'error' %}
       <div class="form-success error show">Заполните имя и телефон, пожалуйста.</div>
+      {% elif request.query_params.get('sent') == 'noconsent' %}
+      <div class="form-success error show">Отметьте, пожалуйста, согласие на обработку персональных данных.</div>
       {% endif %}
     </form>
   </div>
