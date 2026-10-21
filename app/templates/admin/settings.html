@@ -26,6 +26,12 @@
           {% if key == 'manager_signature' %}
           <p style="color:#8a8174;font-size:12.5px;margin-top:6px">Загрузите PNG с прозрачным фоном — он отображается на сайте как есть, без анимации (пустые поля обрезаются автоматически).</p>
           {% endif %}
+          {% if key == 'logo_image' %}
+          <p style="color:#8a8174;font-size:12.5px;margin-top:6px">PNG или SVG с прозрачным фоном. Рекомендуемая высота 80–160px. Подпись «Ателье · Дом Быта» останется рядом с логотипом; если нужен только знак — обрежьте его по границам.</p>
+          {% endif %}
+          {% if key == 'favicon_image' %}
+          <p style="color:#8a8174;font-size:12.5px;margin-top:6px">Квадратное изображение (лучше PNG 512×512). Автоматически будут созданы иконки 16/32/48/192 px и .ico для вкладки браузера.</p>
+          {% endif %}
         {% elif key in ('about_text',) %}
           <textarea name="{{ key }}" rows="8">{{ s.get(key, '') }}</textarea>
         {% elif key in ('hero_subtitle','manager_quote') %}

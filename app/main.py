@@ -321,7 +321,7 @@ async def admin_advantage_text_save(
 
 # ---------- админка: галерея ----------
 
-ALLOWED_IMAGE_EXT = {".jpg", ".jpeg", ".png", ".webp", ".gif", ".avif"}
+ALLOWED_IMAGE_EXT = {".jpg", ".jpeg", ".png", ".webp", ".gif", ".avif", ".svg"}
 
 
 def _save_upload(file: UploadFile) -> str | None:
@@ -537,6 +537,8 @@ SETTING_FIELDS = [
     ("manager_photo", "Фото заведующей (блок «Лицо ателье»)"),
     ("manager_signature", "Рукописная подпись заведующей (PNG с прозрачным фоном)"),
     ("hero_image", "Фоновое фото первого экрана (желательно ≥1600px)"),
+    ("logo_image", "Логотип в шапке и подвале (PNG/SVG с прозрачным фоном)" ),
+    ("favicon_image", "Фавикон — иконка вкладки браузера (квадратный PNG, 512×512)"),
     ("dir_img_meh", "Фото карточки «Меховое ателье» (блок «Что мы делаем»)"),
     ("dir_img_kozha", "Фото карточки «Кожа и дублёнки»"),
     ("dir_img_poshiv", "Фото карточки «Верхняя одежда и лёгкое платье»"),
@@ -554,7 +556,29 @@ SETTING_FIELDS = [
 
 # настройки-картинки: сохраняются через загрузку файла, а не текстовым полем
 IMAGE_SETTINGS = {"manager_photo", "manager_signature", "hero_image",
-                  "dir_img_meh", "dir_img_kozha", "dir_img_poshiv", "dir_img_remont"}
+                  "dir_img_meh", "dir_img_kozha", "dir_img_poshiv", "dir_img_remont",
+                  "logo_image", "favicon_image"}
+
+
+def _make_favicon(path: str) -> None:
+    """Из квадратного исходника делаем набор PNG 16/32/48/192 и ICO 32 в /static/favicon/."""
+    try:
+        from PIL import Image
+        src_path = os.path.normpath(os.path.join(BASE_DIR, path.lstrip("/")))
+        img = Image.open(src_path).convert("RGBA")
+        w, h = img.size
+        side = min(w, h)
+        img = img.crop(((w - side) // 2, (h - side) // 2,
+                        (w - side) // 2 + side, (h - side) // 2 + side))
+        fav_dir = os.path.join(BASE_DIR, "static", "favicon")
+        os.makedirs(fav_dir, exist_ok=True)
+        sizes = [16, 32, 48, 192]
+        for sz in sizes:
+            img.resize((sz, sz), Image.LANCZOS).save(os.path.join(fav_dir, f"favicon-{sz}.png"))
+        img.resize((256, 256), Image.LANCZOS).save(
+            os.path.join(fav_dir, "favicon.ico"), sizes=[(16, 16), (32, 32), (48, 48)])
+    except Exception:
+        pass
 
 
 def _trim_signature(path: str) -> None:
@@ -597,6 +621,8 @@ async def admin_settings_save(request: Request, admin: str = Depends(require_adm
                 _remove_upload(old)  # чистим старый файл
                 if key == "manager_signature":
                     _trim_signature(new_path)
+                if key == "favicon_image" and new_path.lower().endswith((".png", ".jpg", ".jpeg", ".webp")):
+                    _make_favicon(new_path)
             remove_flag = str(form.get(f"{key}_remove") or "").strip()
             if remove_flag:
                 old = db.get_all_settings().get(key, "")
