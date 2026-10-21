@@ -50,6 +50,7 @@
   /* ---------- Burger / mobile menu ---------- */
   const burger = $("#burger");
   const mobileMenu = $("#mobileMenu");
+  const mobileOverlay = $("#mobileOverlay");
   const setMenu = (open) => {
     if (!mobileMenu || !burger) return;
     mobileMenu.classList.toggle("open", open);
@@ -58,7 +59,13 @@
     mobileMenu.setAttribute("aria-hidden", String(!open));
   };
   if (burger && mobileMenu) {
-    burger.addEventListener("click", () => setMenu(!mobileMenu.classList.contains("open")));
+    // preventDefault обязателен: на мобильных клик по кнопке внутри fixed-панели
+    // без него может «съедаться» браузером (300ms tap delay)
+    burger.addEventListener("click", (e) => {
+      e.preventDefault(); e.stopPropagation();
+      setMenu(!mobileMenu.classList.contains("open"));
+    });
+    if (mobileOverlay) mobileOverlay.addEventListener("click", () => setMenu(false));
     // закрытие по клику на любую ссылку/кнопку внутри меню
     mobileMenu.querySelectorAll("a, button").forEach(el =>
       el.addEventListener("click", () => setMenu(false))

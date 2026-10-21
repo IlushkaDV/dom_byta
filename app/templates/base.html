@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧵</text></svg>">
-  <link rel="stylesheet" href="/static/css/style.css?v=20261021g">
+  <link rel="stylesheet" href="/static/css/style.css?v=20261021h">
 </head>
 <body>
 
@@ -32,14 +32,18 @@
     </div>
     <button class="burger" id="burger" aria-label="Меню"><i></i><i></i><i></i></button>
   </div>
+  <div class="mobile-overlay" id="mobileOverlay"></div>
   <div class="mobile-menu" id="mobileMenu">
-    <a href="#about">О нас</a>
-    <button type="button" class="nav-prices-link" data-open-prices="">Услуги и цены</button>
-    <a href="#gallery">Галерея</a>
-    <a href="#steps">Как мы работаем</a>
-    <a href="#order">Записаться</a>
-    <a href="#contacts">Контакты</a>
-    <div class="mobile-menu-contacts">{{ s.phone }}<br>{{ s.address }}</div>
+    <nav class="mobile-menu-inner">
+      <a href="#about">О нас</a>
+      <button type="button" class="nav-prices-link" data-open-prices="">Услуги и цены</button>
+      <a href="#gallery">Галерея</a>
+      <a href="#steps">Как мы работаем</a>
+      <a href="#order">Записаться</a>
+      <a href="#contacts">Контакты</a>
+    </nav>
+    <a href="tel:{{ s.phone | replace('(','')|replace(')','')|replace('-','')|replace(' ','') }}" class="mobile-menu-phone">{{ s.phone }}</a>
+    <div class="mobile-menu-hours">{{ s.hours if s.hours else 'Пн–Пт 10:00–20:00 · Сб–Вс 10:00–19:00' }}</div>
   </div>
 </header>
 
@@ -96,6 +100,6 @@
   <svg viewBox="0 0 24 24"><path fill="currentColor" d="M6.6 10.8a15.6 15.6 0 0 0 6.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.2.4 2.4.6 3.6.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1A17 17 0 0 1 3 4c0-.6.4-1 1-1h3.5c.6 0 1 .4 1 1 0 1.3.2 2.5.6 3.6.1.4 0 .8-.2 1l-2.3 2.2z"/></svg>
 </a>
 
-<script src="/static/js/main.js?v=20261021g"></script>
+<script src="/static/js/main.js?v=20261021h"></script>
 </body>
 </html>
