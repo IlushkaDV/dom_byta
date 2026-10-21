@@ -134,6 +134,7 @@ DEFAULT_SETTINGS = {
     "dir_img_remont": "",
     "manager_photo": "",
     "hero_image": "",
+    "hero_image_mobile": "",
     "address": "Хабаровск, ул. Шеронова, 92, ТЦ «Дом Быта», 6 этаж",
     "phone": "+7 (4212) 32-72-82",
     "phone_tc": "+7 (4212) 32-84-10",

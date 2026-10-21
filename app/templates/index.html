@@ -8,6 +8,9 @@
   {% else %}
   <div class="hero-bg" data-parallax="0.3"></div>
   {% endif %}
+  {% if s.hero_image_mobile %}
+  <div class="hero-bg hero-bg-mobile" style="background-image:url('{{ s.hero_image_mobile }}')"></div>
+  {% endif %}
   <div class="hero-overlay"></div>
   <div class="container hero-content">
     {% if s.hero_kicker %}<span class="hero-kicker reveal">{{ s.hero_kicker }}</span>{% endif %}

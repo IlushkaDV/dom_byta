@@ -560,7 +560,8 @@ SETTING_FIELDS = [
     ("manager_quote", "Цитата заведующей (блок «Лицо ателье»)"),
     ("manager_photo", "Фото заведующей (блок «Лицо ателье»)"),
     ("manager_signature", "Рукописная подпись заведующей (PNG с прозрачным фоном)"),
-    ("hero_image", "Фоновое фото первого экрана (желательно ≥1600px)"),
+    ("hero_image", "Фоновое фото первого экрана (десктоп, горизонтальное ≥1600px)"),
+    ("hero_image_mobile", "Фото первого экрана для телефонов (вертикальное, 9:16 — необязательно)"),
     ("logo_image", "Логотип в шапке и подвале (PNG/SVG с прозрачным фоном)" ),
     ("favicon_image", "Фавикон — иконка вкладки браузера (квадратный PNG, 512×512)"),
     ("dir_img_meh", "Фото карточки «Меховое ателье» (блок «Что мы делаем»)"),
@@ -579,7 +580,7 @@ SETTING_FIELDS = [
 ]
 
 # настройки-картинки: сохраняются через загрузку файла, а не текстовым полем
-IMAGE_SETTINGS = {"manager_photo", "manager_signature", "hero_image",
+IMAGE_SETTINGS = {"manager_photo", "manager_signature", "hero_image", "hero_image_mobile",
                   "dir_img_meh", "dir_img_kozha", "dir_img_poshiv", "dir_img_remont",
                   "logo_image", "favicon_image"}
 

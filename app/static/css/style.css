@@ -172,6 +172,8 @@ body.menu-open { overflow: hidden; }
 }
 /* «правильная» область для фоновых фото на мобильных (заменой CSS-переменной в JS) */
 .hero-bg[data-focus] { background-position: var(--hero-pos, center top); }
+/* мобильное фото первого экрана: скрыто на десктопе, перекрывает десктопное на телефонах */
+.hero-bg-mobile { display: none; z-index: 1; }
 .hero-overlay { position: absolute; inset: 0; z-index: 1; pointer-events: none;
   background: linear-gradient(180deg, rgba(15,12,9,.62) 0%, rgba(15,12,9,.35) 45%, rgba(15,12,9,.72) 100%),
               radial-gradient(120% 90% at 50% 0%, transparent 55%, rgba(0,0,0,.45)); }
@@ -727,6 +729,10 @@ img.manager-photo {
   .hero-actions { gap: 10px; margin-bottom: 34px; }
   .hero-actions .btn { padding: 13px 22px; font-size: 14px; }
   .scroll-hint { display: none; }
+  /* мобильное фото hero показываем, десктопное скрываем */
+  .hero-bg-mobile { display: block; }
+  .hero > .hero-bg:not(.hero-bg-mobile) { display: none; }
+  .hero-bg-mobile { background-position: center top; }
   .adv-grid, .gallery-grid, .contacts-cards { grid-template-columns: 1fr; }
   .dir-card-body { padding: 26px 20px 24px; }
   .review-card { flex-basis: 100%; }
