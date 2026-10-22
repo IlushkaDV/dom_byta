@@ -624,30 +624,33 @@ img.manager-photo {
 }
 .steps-cta { display: flex; justify-content: center; gap: 14px; flex-wrap: wrap; margin-top: 34px; }
 
-/* ---------- Тёмная секция «Как мы работаем» (отделение от кремовых блоков) ---------- */
-.steps-dark { background: var(--ink); color: var(--cream); position: relative; }
-.steps-dark::before, .steps-dark::after {
-  content: ""; position: absolute; left: 0; right: 0; height: 2px; pointer-events: none;
-  background: repeating-linear-gradient(90deg, rgba(185,138,68,.75) 0 10px, transparent 10px 20px);
+/* ---------- Секция «Как мы работаем»: мягкий тёплый фон (не контрастная, не монотонная) ---------- */
+.steps-soft {
+  background: linear-gradient(180deg, #efe6d6 0%, #f3ecdf 100%);
+  color: var(--text, var(--ink)); position: relative;
 }
-.steps-dark::before { top: 0; }
-.steps-dark::after { bottom: 0; }
-.steps-dark .section-kicker { color: var(--gold-light); }
-.steps-dark .section-title { color: #fff; }
-.steps-dark .section-subtitle { color: rgba(247,245,240,.65); }
-.steps-dark .steps-wrap {
-  background: rgba(255,255,255,.03); border-color: rgba(185,138,68,.28);
+.steps-soft::before, .steps-soft::after {
+  content: ""; position: absolute; left: 0; right: 0; height: 1px; pointer-events: none;
+  background: repeating-linear-gradient(90deg, rgba(143,106,48,.38) 0 8px, transparent 8px 18px);
 }
-.steps-dark .steps-wrap::after { border-color: rgba(185,138,68,.30); }
-.steps-dark .step-card {
-  background: var(--cream); border-color: transparent;
-  box-shadow: 0 14px 34px rgba(0,0,0,.28);
+.steps-soft::before { top: 0; }
+.steps-soft::after { bottom: 0; }
+.steps-soft .section-kicker { color: var(--gold-dark); }
+.steps-soft .section-title { color: var(--ink); }
+.steps-soft .section-subtitle { color: rgba(23,19,15,.62); }
+.steps-soft .steps-wrap {
+  background: rgba(255,255,255,.55); border-color: rgba(143,106,48,.22);
 }
-.steps-dark .step-card:hover {
-  border-color: rgba(185,138,68,.55);
-  box-shadow: 0 22px 48px rgba(0,0,0,.40);
+.steps-soft .steps-wrap::after { border-color: rgba(143,106,48,.24); }
+.steps-soft .step-card {
+  background: #fffdf8; border-color: rgba(143,106,48,.18);
+  box-shadow: 0 8px 22px rgba(23,19,15,.07);
 }
-/* пунктирная «строчка» между карточками */
+.steps-soft .step-card:hover {
+  border-color: rgba(143,106,48,.42);
+  box-shadow: 0 14px 32px rgba(23,19,15,.12);
+}
+/* тонкая «строчка» между карточками */
 .step-card:not(:last-child)::after {
   content: ""; position: absolute; top: 46px; right: -20px; width: 20px; height: 0;
   border-top: 2px dashed rgba(185,138,68,.5);
