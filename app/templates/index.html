@@ -93,9 +93,6 @@
         <div class="dir-card-body">
           <h3>{{ d.title }}</h3>
           <p>{{ d.text }}</p>
-          <ul class="dir-tags">
-            {% for tag in d.tags %}<li>{{ tag }}</li>{% endfor %}
-          </ul>
           <button type="button" class="btn btn-dark dir-btn" data-open-prices="{{ d.tab }}">Смотреть цены</button>
         </div>
       </article>
