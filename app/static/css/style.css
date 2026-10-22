@@ -258,6 +258,16 @@ body.menu-open { overflow: hidden; }
 .file-hint { font-size: 13px; color: rgba(26,26,26,.5); }
 .file-name { display: none; font-size: 13px; color: var(--gold-dark); font-weight: 600; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
 .file-name.show { display: inline-block; }
+.file-remove {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 26px; height: 26px; border-radius: 50%;
+  border: 1px solid rgba(26,26,26,.2); background: #fff; color: rgba(26,26,26,.6);
+  font-size: 17px; line-height: 1; cursor: pointer; margin-left: 4px;
+  transition: all .2s ease; vertical-align: middle;
+}
+.file-remove:hover { border-color: #b3402e; color: #b3402e; transform: rotate(90deg); }
+.file-remove[hidden] { display: none; }
+.file-caption { margin: 8px 2px 0; font-size: 13px; color: rgba(26,26,26,.55); }
 .form-file-drop::after { content: ""; flex-basis: 100%; height: 0; }
 @media (max-width: 640px) {
   .form-file-drop { justify-content: center; text-align: center; }

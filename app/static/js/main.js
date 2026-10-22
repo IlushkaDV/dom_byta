@@ -167,23 +167,31 @@
       for (const opt of sel.options) if (opt.value === btn.dataset.service) { sel.value = opt.value; break; }
     }
   }));
-  // зона загрузки фото: кнопка выбора, drag&drop, имя файла
+  // зона загрузки фото: кнопка выбора, drag&drop, имя файла, удаление
   const photo = $("#photoInput"), photoName = $("#photoName");
   const dropZone = $("#dropZone"), browseBtn = $("#browseBtn");
+  const removeBtn = $("#photoRemove");
   const showFileName = () => {
     if (!photo || !photoName) return;
     if (photo.files.length) {
       photoName.textContent = photo.files[0].name;
       photoName.classList.add("show");
       dropZone && dropZone.classList.add("has-file");
+      removeBtn && (removeBtn.hidden = false);
     } else {
       photoName.textContent = "";
       photoName.classList.remove("show");
       dropZone && dropZone.classList.remove("has-file");
+      removeBtn && (removeBtn.hidden = true);
     }
   };
   if (photo) photo.addEventListener("change", showFileName);
   if (browseBtn && photo) browseBtn.addEventListener("click", () => photo.click());
+  if (removeBtn && photo) removeBtn.addEventListener("click", e => {
+    e.preventDefault(); e.stopPropagation();
+    photo.value = "";
+    showFileName();
+  });
   if (dropZone && photo) {
     ["dragenter", "dragover"].forEach(ev => dropZone.addEventListener(ev, e => {
       e.preventDefault(); dropZone.classList.add("dragover");

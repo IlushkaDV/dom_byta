@@ -295,9 +295,11 @@
       <div class="form-file-drop" id="dropZone">
         <input type="file" name="photo" id="photoInput" accept="image/*" hidden>
         <button type="button" class="file-browse-btn" id="browseBtn">Выбрать файл с устройства</button>
-        <span class="file-hint">или перетащите фото сюда — необязательно</span>
+        <span class="file-hint">или перетащите фото сюда</span>
         <span class="file-name" id="photoName"></span>
+        <button type="button" class="file-remove" id="photoRemove" title="Убрать файл" hidden>&times;</button>
       </div>
+      <p class="file-caption"><em>Не обязательно: прикрепите фото изделия — так мастер сможет предварительно оценить стоимость.</em></p>
       <label>Комментарий<textarea name="message" rows="3" placeholder="Опишите задачу: что и из какого материала, сроки…"></textarea></label>
       <button class="btn btn-primary btn-block" type="submit">Записаться на консультацию</button>
       <label class="form-consent">
