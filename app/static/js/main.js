@@ -94,7 +94,8 @@
   const pricesTitle = $("#pricesModalTitle");
   function openPrices(tabKey) {
     if (!pricesModal) return;
-    $$(".tab-panel").forEach(p => p.classList.toggle("hidden", p.id !== "tab-" + tabKey));
+    // Без направления (кнопка в hero/шапке) — показываем все категории
+    $$(".tab-panel").forEach(p => p.classList.toggle("hidden", !!tabKey && p.id !== "tab-" + tabKey));
     if (pricesTitle) {
       const btn = document.querySelector('[data-open-prices="' + tabKey + '"]');
       const card = btn && btn.closest(".dir-card");

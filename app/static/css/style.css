@@ -210,6 +210,30 @@ body.menu-open { overflow: hidden; }
 .btn-primary:hover { transform: translateY(-3px); box-shadow: 0 26px 50px -18px rgba(185,138,68,.8); }
 .btn-ghost { border-color: rgba(246,241,232,.35); color: var(--cream); }
 .btn-ghost:hover { background: rgba(246,241,232,.1); transform: translateY(-3px); }
+/* Стеклянная кнопка «Услуги и цены» в hero */
+.btn-glass {
+  position: relative; cursor: pointer;
+  background: rgba(246,241,232,.08);
+  -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
+  border: 1px solid rgba(246,241,232,.28); color: var(--cream);
+  overflow: hidden;
+}
+.btn-glass::before {
+  content: ""; position: absolute; inset: 0;
+  background: linear-gradient(120deg, transparent 20%, rgba(255,255,255,.22) 50%, transparent 80%);
+  transform: translateX(-110%); transition: transform .7s var(--ease);
+}
+.btn-glass:hover::before { transform: translateX(110%); }
+.btn-glass svg { transition: transform .35s var(--ease); opacity: .85; }
+.btn-glass:hover {
+  background: rgba(246,241,232,.14);
+  border-color: var(--gold-light);
+  color: #fff;
+  transform: translateY(-3px);
+  box-shadow: 0 20px 40px -20px rgba(0,0,0,.6), 0 0 0 1px rgba(212,175,110,.25);
+}
+.btn-glass:hover svg { transform: translateX(3px); opacity: 1; color: var(--gold-light); }
+.btn-glass:active { transform: translateY(-1px); }
 .btn-mini { padding: 9px 18px; font-size: 13px; background: var(--ink); color: var(--cream); white-space: nowrap; }
 .btn-mini:hover { background: var(--gold); }
 .btn-block { width: 100%; }
