@@ -216,16 +216,42 @@
   <div class="container">
     <span class="section-kicker center reveal">Как мы работаем</span>
     <h2 class="section-title center reveal">Схема безопасной работы</h2>
+    <p class="section-subtitle center reveal">Четыре шага — от первой встречи до готового изделия. Ни один рубль и ни один миллиметр не теряются по дороге.</p>
     <div class="steps-wrap">
       <div class="steps-line">
+        {% set step_icons = ["pin", "scissors", "needle", "check"] %}
+        {% set step_meta = ["6 этаж ТЦ «Дом Быта»", "мех режем только после примерки", "импортное оборудование", "даём гарантию на работу"] %}
         {% for title, text in steps %}
         <div class="step-card reveal" data-delay="{{ loop.index0 * 90 }}">
-          <span class="step-num">{{ loop.index }}</span>
+          <div class="step-top">
+            <span class="step-num">{{ loop.index }}</span>
+            <svg class="step-icon" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              {% if loop.index == 1 %}
+                <path d="M24 42s13-11.5 13-22A13 13 0 1 0 11 20c0 10.5 13 22 13 22Z"/>
+                <circle cx="24" cy="20" r="4.5"/>
+              {% elif loop.index == 2 %}
+                <circle cx="12" cy="36" r="5"/><circle cx="36" cy="36" r="5"/>
+                <path d="M15.5 32.5 36 8M32.5 32.5 12 8"/>
+              {% elif loop.index == 3 %}
+                <path d="M38 10 14 34l-4 4 4-4"/>
+                <path d="M38 10c2.5 2.5 2.5 5.5 0 8"/>
+                <path d="M10 38c-3-1-4-4-2-6s5-1 5 2c0 4-5 6-9 5"/>
+              {% else %}
+                <path d="M24 6l14 5v10c0 9-6 16-14 19-8-3-14-10-14-19V11l14-5Z"/>
+                <path d="M17 24l5 5 9-10"/>
+              {% endif %}
+            </svg>
+          </div>
           <h3>{{ title }}</h3>
           <p>{{ text }}</p>
+          <span class="step-meta">{{ step_meta[loop.index0] if loop.index0 < step_meta|length else "" }}</span>
         </div>
         {% endfor %}
       </div>
+    </div>
+    <div class="steps-cta reveal">
+      <a class="btn btn-dark" href="#order">Записаться на консультацию</a>
+      <a class="btn btn-glass" href="tel:+74212327282">+7 (4212) 32-72-82</a>
     </div>
   </div>
 </section>
