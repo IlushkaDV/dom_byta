@@ -167,11 +167,37 @@
       for (const opt of sel.options) if (opt.value === btn.dataset.service) { sel.value = opt.value; break; }
     }
   }));
-  // имя файла при загрузке фото
+  // зона загрузки фото: кнопка выбора, drag&drop, имя файла
   const photo = $("#photoInput"), photoName = $("#photoName");
-  if (photo && photoName) photo.addEventListener("change", () => {
-    photoName.textContent = photo.files.length ? photo.files[0].name : "не обязательно";
-  });
+  const dropZone = $("#dropZone"), browseBtn = $("#browseBtn");
+  const showFileName = () => {
+    if (!photo || !photoName) return;
+    if (photo.files.length) {
+      photoName.textContent = photo.files[0].name;
+      photoName.classList.add("show");
+      dropZone && dropZone.classList.add("has-file");
+    } else {
+      photoName.textContent = "";
+      photoName.classList.remove("show");
+      dropZone && dropZone.classList.remove("has-file");
+    }
+  };
+  if (photo) photo.addEventListener("change", showFileName);
+  if (browseBtn && photo) browseBtn.addEventListener("click", () => photo.click());
+  if (dropZone && photo) {
+    ["dragenter", "dragover"].forEach(ev => dropZone.addEventListener(ev, e => {
+      e.preventDefault(); dropZone.classList.add("dragover");
+    }));
+    ["dragleave", "drop"].forEach(ev => dropZone.addEventListener(ev, e => {
+      e.preventDefault(); dropZone.classList.remove("dragover");
+    }));
+    dropZone.addEventListener("drop", e => {
+      if (e.dataTransfer.files && e.dataTransfer.files.length) {
+        photo.files = e.dataTransfer.files;
+        showFileName();
+      }
+    });
+  }
   // маска телефона
   const phoneInput = $("#phoneInput");
   if (phoneInput) phoneInput.addEventListener("input", () => {

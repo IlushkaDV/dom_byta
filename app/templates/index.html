@@ -292,11 +292,12 @@
           <option value="Другое">Другое</option>
         </select>
       </label>
-      <label class="form-file">
+      <div class="form-file-drop" id="dropZone">
         <input type="file" name="photo" id="photoInput" accept="image/*" hidden>
-        <span class="btn btn-file">📎 Прикрепить фото шубы / одежды</span>
-        <em id="photoName">не обязательно</em>
-      </label>
+        <button type="button" class="file-browse-btn" id="browseBtn">Выбрать файл с устройства</button>
+        <span class="file-hint">или перетащите фото сюда — необязательно</span>
+        <span class="file-name" id="photoName"></span>
+      </div>
       <label>Комментарий<textarea name="message" rows="3" placeholder="Опишите задачу: что и из какого материала, сроки…"></textarea></label>
       <button class="btn btn-primary btn-block" type="submit">Записаться на консультацию</button>
       <label class="form-consent">
