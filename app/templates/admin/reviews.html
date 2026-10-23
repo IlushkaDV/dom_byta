@@ -20,7 +20,7 @@
         <td>{% if r.is_public %}<span class="badge badge-on">Опубликован</span>{% else %}<span class="badge badge-off">Скрыт</span>{% endif %}</td>
         <td style="white-space:nowrap">
           <button class="btn btn-sm" data-open="revModal" data-edit='{{ r | tojson }}'>✏️ Изменить</button>
-          <form method="post" action="/admin/reviews/{{ r.id }}/delete" data-confirm="Удалить отзыв?" style="display:inline">
+          <form method="post" action="{{ admin_base }}/reviews/{{ r.id }}/delete" data-confirm="Удалить отзыв?" style="display:inline">
   <input type="hidden" name="_csrf" value="{{ request.state.csrf }}">
             <button class="btn btn-danger" type="submit">Удалить</button>
           </form>
@@ -35,7 +35,7 @@
   <div class="modal">
     <button type="button" class="modal-close">×</button>
     <h2>Отзыв</h2>
-    <form method="post" action="/admin/reviews/save" id="revForm">
+    <form method="post" action="{{ admin_base }}/reviews/save" id="revForm">
   <input type="hidden" name="_csrf" value="{{ request.state.csrf }}">
       <input type="hidden" name="id" value="0">
       <div class="form-grid">

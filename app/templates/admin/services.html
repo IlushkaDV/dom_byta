@@ -20,7 +20,7 @@
         <td>{% if srv.is_active %}<span class="badge badge-on">Активна</span>{% else %}<span class="badge badge-off">Скрыта</span>{% endif %}</td>
         <td style="white-space:nowrap">
           <button class="btn btn-sm" data-open="svcModal" data-edit='{{ srv | tojson }}' onclick="fillSvc(this)">✏️ Изменить</button>
-          <form method="post" action="/admin/services/{{ srv.id }}/delete" data-confirm="Удалить услугу «{{ srv.title }}»?" style="display:inline">
+          <form method="post" action="{{ admin_base }}/services/{{ srv.id }}/delete" data-confirm="Удалить услугу «{{ srv.title }}»?" style="display:inline">
   <input type="hidden" name="_csrf" value="{{ request.state.csrf }}">
             <button class="btn btn-danger" type="submit">Удалить</button>
           </form>
@@ -36,7 +36,7 @@
   <div class="modal">
     <button type="button" class="modal-close">×</button>
     <h2 id="svcTitle">Новая услуга</h2>
-    <form method="post" action="/admin/services/save" id="svcForm">
+    <form method="post" action="{{ admin_base }}/services/save" id="svcForm">
   <input type="hidden" name="_csrf" value="{{ request.state.csrf }}">
       <input type="hidden" name="id" value="0">
       <div class="form-grid">

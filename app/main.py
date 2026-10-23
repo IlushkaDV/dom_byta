@@ -113,6 +113,52 @@ def require_csrf(request: Request, csrf_check: str | None = Form(None, alias="_c
         raise HTTPException(400, "Сессия устарела, обновите страницу")
 
 
+# ---------- скрытый адрес админки ----------
+# Админка доступна только по секретному пути /admin-XXXXXX. Обычный /admin...
+# отдаёт 404 — сканеры и случайные посетители не видят страницу входа.
+# Секрет задаётся переменной окружения ATELLE_ADMIN_PATH (например "kabinet7"),
+# иначе генерируется случайно и сохраняется в data/.admin_path — адрес
+# печатается в консоли при запуске сервера.
+
+_DATA_DIR = os.path.abspath(os.path.join(BASE_DIR, "..", "data"))
+_ADMIN_PATH_FILE = os.path.join(_DATA_DIR, ".admin_path")
+
+
+def _load_admin_secret() -> str:
+    env = os.environ.get("ATELLE_ADMIN_PATH", "").strip().strip("/")
+    if env:
+        return env
+    try:
+        with open(_ADMIN_PATH_FILE, "r", encoding="utf-8") as f:
+            saved = f.read().strip()
+        if saved:
+            return saved
+    except OSError:
+        pass
+    secret = "admin-" + secrets.token_hex(4)
+    os.makedirs(_DATA_DIR, exist_ok=True)
+    with open(_ADMIN_PATH_FILE, "w", encoding="utf-8") as f:
+        f.write(secret)
+    try:
+        os.chmod(_ADMIN_PATH_FILE, 0o600)
+    except OSError:
+        pass
+    return secret
+
+
+ADMIN_SECRET = _load_admin_secret()
+ADMIN_BASE = "/" + ADMIN_SECRET  # например /admin-k7f3a9c2
+
+templates.env.globals["admin_base"] = ADMIN_BASE  # доступно во всех шаблонах как {{ admin_base }}
+
+
+def _is_admin_url(path: str) -> bool:
+    """Путь относится к админке: точный ADMIN_BASE или ADMIN_BASE/что-то."""
+    p = path.rstrip("/") or "/"
+    base = ADMIN_BASE.rstrip("/")
+    return p == base or p.startswith(base + "/")
+
+
 # ---------- helpers ----------
 
 def get_current_admin(request: Request) -> str | None:
@@ -125,7 +171,7 @@ def get_current_admin(request: Request) -> str | None:
 def require_admin(request: Request) -> str:
     login = get_current_admin(request)
     if not login:
-        raise HTTPException(status_code=303, headers={"Location": "/admin/login"})
+        raise HTTPException(status_code=303, headers={"Location": ADMIN_BASE + "/login"})
     return login
 
 
@@ -138,6 +184,11 @@ def redirect(url: str, flash: str | None = None) -> RedirectResponse:
 
 @app.middleware("http")
 async def flash_middleware(request: Request, call_next):
+    # Скрытая админка: обычный /admin... не существует, только секретный путь.
+    path = request.url.path
+    if (path == "/admin" or path.startswith("/admin/")) and not _is_admin_url(path):
+        return _security_headers(
+            JSONResponse({"detail": "Not Found"}, status_code=404))
     # CSRF-токен для админ-форм (доступен в шаблонах как request.state.csrf)
     request.state.csrf = ""
     adm = get_current_admin(request)
@@ -251,14 +302,14 @@ def create_order(
 
 # ---------- админка: авторизация ----------
 
-@app.get("/admin/login", response_class=HTMLResponse)
+@app.get(ADMIN_BASE + "/login", response_class=HTMLResponse)
 def login_page(request: Request):
     if get_current_admin(request):
-        return RedirectResponse("/admin", status_code=303)
+        return RedirectResponse(f"{ADMIN_BASE}", status_code=303)
     return templates.TemplateResponse(request, "admin/login.html")
 
 
-@app.post("/admin/login")
+@app.post(ADMIN_BASE + "/login")
 def login(request: Request, login_name: str = Form(...), password: str = Form(...)):
     ip = _client_ip(request)
     if _login_blocked(ip):
@@ -275,7 +326,7 @@ def login(request: Request, login_name: str = Form(...), password: str = Form(..
             context={"error": "Неверный логин или пароль"},
             status_code=401)
     _login_ok(ip)
-    resp = RedirectResponse("/admin", status_code=303)
+    resp = RedirectResponse(f"{ADMIN_BASE}", status_code=303)
     resp.set_cookie("atele_admin_session", make_session_token(login_name),
                     httponly=True, secure=request.url.scheme == "https",
                     samesite="lax", max_age=60 * 60 * 12)
@@ -292,19 +343,20 @@ def privacy(request: Request):
     s = db.get_all_settings()
     return templates.TemplateResponse(request, "privacy.html", context={
         "s": s, "policy_updated": "01.10.2026", "POLICY_TITLE": POLICY_TITLE,
+        "admin": get_current_admin(request),
     })
 
 
-@app.get("/admin/logout")
+@app.get(ADMIN_BASE + "/logout", response_class=HTMLResponse)
 def logout():
-    resp = RedirectResponse("/admin/login", status_code=303)
+    resp = RedirectResponse(f"{ADMIN_BASE}/login", status_code=303)
     resp.delete_cookie("atele_admin_session")
     return resp
 
 
 # ---------- админка: дашборд ----------
 
-@app.get("/admin", response_class=HTMLResponse)
+@app.get(ADMIN_BASE, response_class=HTMLResponse)
 def admin_dashboard(request: Request, admin: str = Depends(require_admin)):
     with db.db() as conn:
         stats = {
@@ -326,7 +378,7 @@ def admin_dashboard(request: Request, admin: str = Depends(require_admin)):
 ORDERS_STATUS_LABELS = {"new": "Новая", "in_progress": "В работе", "done": "Завершена", "cancelled": "Отклонена"}
 
 
-@app.get("/admin/orders", response_class=HTMLResponse)
+@app.get(ADMIN_BASE + "/orders", response_class=HTMLResponse)
 def admin_orders(request: Request, admin: str = Depends(require_admin), status: str = ""):
     with db.db() as conn:
         if status in ORDERS_STATUS_LABELS:
@@ -339,25 +391,25 @@ def admin_orders(request: Request, admin: str = Depends(require_admin), status: 
     })
 
 
-@app.post("/admin/orders/{order_id}/status")
+@app.post(ADMIN_BASE + "/orders/{order_id}/status")
 def admin_order_status(order_id: int, request: Request, status: str = Form(...), admin: str = Depends(require_admin), _: None = Depends(require_csrf)):
     if status not in ORDERS_STATUS_LABELS:
         raise HTTPException(400)
     with db.db() as conn:
         conn.execute("UPDATE orders SET status=? WHERE id=?", (status, order_id))
-    return redirect("/admin/orders")
+    return redirect(f"{ADMIN_BASE}/orders")
 
 
-@app.post("/admin/orders/{order_id}/delete")
+@app.post(ADMIN_BASE + "/orders/{order_id}/delete")
 def admin_order_delete(order_id: int, request: Request, admin: str = Depends(require_admin), _csrf_ok: None = Depends(require_csrf)):
     with db.db() as conn:
         conn.execute("DELETE FROM orders WHERE id=?", (order_id,))
-    return redirect("/admin/orders")
+    return redirect(f"{ADMIN_BASE}/orders")
 
 
 # ---------- админка: услуги ----------
 
-@app.get("/admin/services", response_class=HTMLResponse)
+@app.get(ADMIN_BASE + "/services", response_class=HTMLResponse)
 def admin_services(request: Request, admin: str = Depends(require_admin)):
     with db.db() as conn:
         rows = [dict(r) for r in conn.execute("SELECT * FROM services ORDER BY sort_order, id")]
@@ -379,7 +431,7 @@ def _service_form(id_: int | None, title: str, description: str, price: str, cat
                 (title, description, price, category, sort_order, int(is_active)))
 
 
-@app.post("/admin/services/save")
+@app.post(ADMIN_BASE + "/services/save")
 def admin_service_save(
     request: Request,
     admin: str = Depends(require_admin),
@@ -392,19 +444,19 @@ def admin_service_save(
         raise HTTPException(400, "Название обязательно")
     _service_form(id or None, title.strip(), description.strip(), price.strip(),
                   category.strip(), sort_order, bool(is_active))
-    return redirect("/admin/services")
+    return redirect(f"{ADMIN_BASE}/services")
 
 
-@app.post("/admin/services/{service_id}/delete")
+@app.post(ADMIN_BASE + "/services/{service_id}/delete")
 def admin_service_delete(service_id: int, request: Request, admin: str = Depends(require_admin), _csrf_ok: None = Depends(require_csrf)):
     with db.db() as conn:
         conn.execute("DELETE FROM services WHERE id=?", (service_id,))
-    return redirect("/admin/services")
+    return redirect(f"{ADMIN_BASE}/services")
 
 
 # ---------- админка: условия и надбавки (карточки + прейскурант) ----------
 
-@app.get("/admin/advantages", response_class=HTMLResponse)
+@app.get(ADMIN_BASE + "/advantages", response_class=HTMLResponse)
 def admin_advantages(request: Request, admin: str = Depends(require_admin)):
     s = db.get_all_settings()
     with db.db() as conn:
@@ -417,7 +469,7 @@ def admin_advantages(request: Request, admin: str = Depends(require_admin)):
     })
 
 
-@app.post("/admin/advantages/save")
+@app.post(ADMIN_BASE + "/advantages/save")
 def admin_advantage_save(
     request: Request,
     admin: str = Depends(require_admin),
@@ -433,17 +485,17 @@ def admin_advantage_save(
         else:
             conn.execute("INSERT INTO advantages(icon, title, text) VALUES(?,?,?)",
                          (icon.strip(), title.strip(), text.strip()))
-    return redirect("/admin/advantages")
+    return redirect(f"{ADMIN_BASE}/advantages")
 
 
-@app.post("/admin/advantages/{adv_id}/delete")
+@app.post(ADMIN_BASE + "/advantages/{adv_id}/delete")
 def admin_advantage_delete(adv_id: int, request: Request, admin: str = Depends(require_admin), _csrf_ok: None = Depends(require_csrf)):
     with db.db() as conn:
         conn.execute("DELETE FROM advantages WHERE id=?", (adv_id,))
-    return redirect("/admin/advantages")
+    return redirect(f"{ADMIN_BASE}/advantages")
 
 
-@app.post("/admin/advantages/text")
+@app.post(ADMIN_BASE + "/advantages/text")
 async def admin_advantage_text_save(
     request: Request, admin: str = Depends(require_admin),
     _csrf_ok: None = Depends(require_csrf),
@@ -452,7 +504,7 @@ async def admin_advantage_text_save(
     for k in form.keys():
         if k.startswith("prices_note_") or k.startswith("prices_surcharge_"):
             db.set_setting(k, str(form[k]).strip())
-    return redirect("/admin/advantages")
+    return redirect(f"{ADMIN_BASE}/advantages")
 
 
 # ---------- админка: галерея ----------
@@ -494,7 +546,7 @@ def _save_upload(file: UploadFile) -> str | None:
     return f"/static/uploads/{fname}"
 
 
-@app.get("/admin/gallery", response_class=HTMLResponse)
+@app.get(ADMIN_BASE + "/gallery", response_class=HTMLResponse)
 def admin_gallery(request: Request, admin: str = Depends(require_admin)):
     with db.db() as conn:
         rows = [dict(r) for r in conn.execute("SELECT * FROM gallery_items ORDER BY id DESC")]
@@ -534,7 +586,7 @@ def _remove_upload(path: str | None) -> None:
         pass
 
 
-@app.post("/admin/gallery/save")
+@app.post(ADMIN_BASE + "/gallery/save")
 async def admin_gallery_save(
     request: Request,
     admin: str = Depends(require_admin),
@@ -584,7 +636,7 @@ async def admin_gallery_save(
             if (nbt, nat) != (bt, at):
                 conn.execute("UPDATE gallery_items SET before_text=?, after_text=? WHERE id=?",
                              (nbt, nat, r["id"]))
-    return redirect("/admin/gallery")
+    return redirect(f"{ADMIN_BASE}/gallery")
 
 
 def _clean_work_texts(before: str, after: str, title: str) -> tuple[str, str]:
@@ -608,7 +660,7 @@ def _clean_work_texts(before: str, after: str, title: str) -> tuple[str, str]:
     return before, after
 
 
-@app.post("/admin/gallery/migrate")
+@app.post(ADMIN_BASE + "/gallery/migrate")
 def admin_gallery_migrate(request: Request, admin: str = Depends(require_admin), _csrf_ok: None = Depends(require_csrf)):
     """Разово перенести старые одиночные фото в слоты «До»/«После»."""
     moved = 0
@@ -626,10 +678,10 @@ def admin_gallery_migrate(request: Request, admin: str = Depends(require_admin),
                     conn.execute("UPDATE gallery_items SET before_image_path=?, after_image_path=? WHERE id=?",
                                  (nb, na, r["id"]))
                     moved += 1
-    return redirect("/admin/gallery")
+    return redirect(f"{ADMIN_BASE}/gallery")
 
 
-@app.post("/admin/gallery/{item_id}/delete")
+@app.post(ADMIN_BASE + "/gallery/{item_id}/delete")
 def admin_gallery_delete(item_id: int, request: Request, admin: str = Depends(require_admin), _csrf_ok: None = Depends(require_csrf)):
     with db.db() as conn:
         row = conn.execute("SELECT image_path, before_image_path, after_image_path FROM gallery_items WHERE id=?",
@@ -643,12 +695,12 @@ def admin_gallery_delete(item_id: int, request: Request, admin: str = Depends(re
                     os.remove(p)
                 except OSError:
                     pass
-    return redirect("/admin/gallery")
+    return redirect(f"{ADMIN_BASE}/gallery")
 
 
 # ---------- админка: отзывы ----------
 
-@app.get("/admin/reviews", response_class=HTMLResponse)
+@app.get(ADMIN_BASE + "/reviews", response_class=HTMLResponse)
 def admin_reviews(request: Request, admin: str = Depends(require_admin)):
     with db.db() as conn:
         rows = [dict(r) for r in conn.execute("SELECT * FROM reviews ORDER BY created_at DESC")]
@@ -657,7 +709,7 @@ def admin_reviews(request: Request, admin: str = Depends(require_admin)):
     })
 
 
-@app.post("/admin/reviews/save")
+@app.post(ADMIN_BASE + "/reviews/save")
 def admin_review_save(
     request: Request,
     admin: str = Depends(require_admin),
@@ -675,14 +727,14 @@ def admin_review_save(
         else:
             conn.execute("INSERT INTO reviews(author, rating, text, is_public) VALUES(?,?,?,?)",
                          (author, rating, text, int(bool(is_public))))
-    return redirect("/admin/reviews")
+    return redirect(f"{ADMIN_BASE}/reviews")
 
 
-@app.post("/admin/reviews/{review_id}/delete")
+@app.post(ADMIN_BASE + "/reviews/{review_id}/delete")
 def admin_review_delete(review_id: int, request: Request, admin: str = Depends(require_admin), _csrf_ok: None = Depends(require_csrf)):
     with db.db() as conn:
         conn.execute("DELETE FROM reviews WHERE id=?", (review_id,))
-    return redirect("/admin/reviews")
+    return redirect(f"{ADMIN_BASE}/reviews")
 
 
 # ---------- админка: настройки ----------
@@ -764,7 +816,7 @@ def _trim_signature(path: str) -> None:
         pass
 
 
-@app.get("/admin/settings", response_class=HTMLResponse)
+@app.get(ADMIN_BASE + "/settings", response_class=HTMLResponse)
 def admin_settings(request: Request, admin: str = Depends(require_admin)):
     s = db.get_all_settings()
     return templates.TemplateResponse(request, "admin/settings.html", context={
@@ -772,7 +824,7 @@ def admin_settings(request: Request, admin: str = Depends(require_admin)):
     })
 
 
-@app.post("/admin/settings")
+@app.post(ADMIN_BASE + "/settings")
 async def admin_settings_save(request: Request, admin: str = Depends(require_admin), _csrf_ok: None = Depends(require_csrf)):
     form = await request.form()
     for key, _label in SETTING_FIELDS:
@@ -793,17 +845,17 @@ async def admin_settings_save(request: Request, admin: str = Depends(require_adm
                 _remove_upload(old)
         elif key in form:
             db.set_setting(key, str(form[key]).strip())
-    return redirect("/admin/settings?saved=1")
+    return redirect(f"{ADMIN_BASE}/settings?saved=1")
 
 
 # ---------- админка: смена пароля ----------
 
-@app.get("/admin/password", response_class=HTMLResponse)
+@app.get(ADMIN_BASE + "/password", response_class=HTMLResponse)
 def admin_password_page(request: Request, admin: str = Depends(require_admin)):
     return templates.TemplateResponse(request, "admin/password.html", context={"admin": admin})
 
 
-@app.post("/admin/password")
+@app.post(ADMIN_BASE + "/password")
 def admin_password_change(
     request: Request,
     old: str = Form(...), new: str = Form(...), confirm: str = Form(...),
@@ -811,13 +863,13 @@ def admin_password_change(
     _csrf_ok: None = Depends(require_csrf),
 ):
     if new != confirm or len(new) < 6:
-        return redirect("/admin/password?err=short")
+        return redirect(f"{ADMIN_BASE}/password?err=short")
     with db.db() as conn:
         row = conn.execute("SELECT * FROM admins WHERE login=?", (admin,)).fetchone()
         if not row or not verify_password(old, row["password_hash"]):
-            return redirect("/admin/password?err=old")
+            return redirect(f"{ADMIN_BASE}/password?err=old")
         conn.execute("UPDATE admins SET password_hash=? WHERE id=?", (row["id"], hash_password(new)))
-    return redirect("/admin/password?ok=1")
+    return redirect(f"{ADMIN_BASE}/password?ok=1")
 
 
 @app.exception_handler(HTTPException)

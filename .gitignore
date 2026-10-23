@@ -6,3 +6,6 @@ data/atele.db
 data/.secret_key
 app/static/uploads/*
 !app/static/uploads/.gitkeep
+
+# Секретный адрес админки — не должен попадать в git
+data/.admin_path

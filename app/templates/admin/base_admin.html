@@ -14,18 +14,18 @@
   <aside class="sidebar">
     <div class="side-logo"><span>DB</span> Ателье · Админ</div>
     <nav class="side-nav">
-      <a href="/admin" {% if page=='dashboard' %}class="active"{% endif %}><i>◧</i> Дашборд</a>
-      <a href="/admin/orders" {% if page=='orders' %}class="active"{% endif %}><i>☰</i> Заявки</a>
-      <a href="/admin/services" {% if page=='services' %}class="active"{% endif %}><i>✂</i> Услуги и цены</a>
-      <a href="/admin/advantages" {% if page=='advantages' %}class="active"{% endif %}><i>◆</i> Условия и надбавки</a>
-      <a href="/admin/gallery" {% if page=='gallery' %}class="active"{% endif %}><i>▦</i> Галерея работ</a>
-      <a href="/admin/reviews" {% if page=='reviews' %}class="active"{% endif %}><i>★</i> Отзывы</a>
-      <a href="/admin/settings" {% if page=='settings' %}class="active"{% endif %}><i>⚙</i> Настройки сайта</a>
-      <a href="/admin/password" {% if page=='password' %}class="active"{% endif %}><i>🔑</i> Смена пароля</a>
+      <a href="{{ admin_base }}" {% if page=='dashboard' %}class="active"{% endif %}><i>◧</i> Дашборд</a>
+      <a href="{{ admin_base }}/orders" {% if page=='orders' %}class="active"{% endif %}><i>☰</i> Заявки</a>
+      <a href="{{ admin_base }}/services" {% if page=='services' %}class="active"{% endif %}><i>✂</i> Услуги и цены</a>
+      <a href="{{ admin_base }}/advantages" {% if page=='advantages' %}class="active"{% endif %}><i>◆</i> Условия и надбавки</a>
+      <a href="{{ admin_base }}/gallery" {% if page=='gallery' %}class="active"{% endif %}><i>▦</i> Галерея работ</a>
+      <a href="{{ admin_base }}/reviews" {% if page=='reviews' %}class="active"{% endif %}><i>★</i> Отзывы</a>
+      <a href="{{ admin_base }}/settings" {% if page=='settings' %}class="active"{% endif %}><i>⚙</i> Настройки сайта</a>
+      <a href="{{ admin_base }}/password" {% if page=='password' %}class="active"{% endif %}><i>🔑</i> Смена пароля</a>
     </nav>
     <div class="side-footer">
       <a href="/" target="_blank" class="side-view">↗ Открыть сайт</a>
-      <a href="/admin/logout" class="side-logout">Выйти ({{ admin }})</a>
+      <a href="{{ admin_base }}/logout" class="side-logout">Выйти ({{ admin }})</a>
     </div>
   </aside>
   <div class="admin-main">

@@ -18,7 +18,7 @@
         <td style="max-width:420px">{{ a.text }}</td>
         <td style="white-space:nowrap">
           <button class="btn btn-sm" data-open="advModal" data-edit='{{ a | tojson }}'>✏️ Изменить</button>
-          <form method="post" action="/admin/advantages/{{ a.id }}/delete" data-confirm="Удалить карточку?" style="display:inline">
+          <form method="post" action="{{ admin_base }}/advantages/{{ a.id }}/delete" data-confirm="Удалить карточку?" style="display:inline">
   <input type="hidden" name="_csrf" value="{{ request.state.csrf }}">
             <button class="btn btn-danger" type="submit">Удалить</button>
           </form>
@@ -32,7 +32,7 @@
 <div class="panel">
   <div class="panel-head"><h2>Тексты примечаний к ценам</h2></div>
   <p class="muted" style="margin-top:-6px">Эти тексты показываются под блоком цен на сайте.</p>
-  <form method="post" action="/admin/advantages/text">
+  <form method="post" action="{{ admin_base }}/advantages/text">
   <input type="hidden" name="_csrf" value="{{ request.state.csrf }}">
     {% for key, label in text_fields %}
     <div class="field" style="margin-bottom:14px">
@@ -50,7 +50,7 @@
   <div class="modal">
     <button type="button" class="modal-close">×</button>
     <h2>Карточка условия</h2>
-    <form method="post" action="/admin/advantages/save" id="advForm">
+    <form method="post" action="{{ admin_base }}/advantages/save" id="advForm">
   <input type="hidden" name="_csrf" value="{{ request.state.csrf }}">
       <input type="hidden" name="id" value="0">
       <div class="form-grid">

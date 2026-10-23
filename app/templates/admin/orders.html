@@ -4,9 +4,9 @@
 {% block content %}
 
 <div class="filters">
-  <a href="/admin/orders" {% if not cur_status %}class="active"{% endif %}>Все</a>
+  <a href="{{ admin_base }}/orders" {% if not cur_status %}class="active"{% endif %}>Все</a>
   {% for key, label in status_labels.items() %}
-  <a href="/admin/orders?status={{ key }}" {% if cur_status == key %}class="active"{% endif %}>{{ label }}</a>
+  <a href="{{ admin_base }}/orders?status={{ key }}" {% if cur_status == key %}class="active"{% endif %}>{{ label }}</a>
   {% endfor %}
 </div>
 
@@ -36,7 +36,7 @@
         </td>
         <td><span class="badge badge-{{ o.status }}">{{ status_labels[o.status] }}</span></td>
         <td>
-          <form method="post" action="/admin/orders/{{ o.id }}/status" style="display:flex;gap:6px;margin-bottom:6px">
+          <form method="post" action="{{ admin_base }}/orders/{{ o.id }}/status" style="display:flex;gap:6px;margin-bottom:6px">
   <input type="hidden" name="_csrf" value="{{ request.state.csrf }}">
             <select name="status" style="padding:6px 8px;border-radius:8px;border:1px solid rgba(32,27,21,.15);font:inherit;font-size:12.5px">
               {% for key, label in status_labels.items() %}
@@ -45,7 +45,7 @@
             </select>
             <button class="btn btn-sm" type="submit">OK</button>
           </form>
-          <form method="post" action="/admin/orders/{{ o.id }}/delete" data-confirm="Удалить заявку #{{ o.id }}?">
+          <form method="post" action="{{ admin_base }}/orders/{{ o.id }}/delete" data-confirm="Удалить заявку #{{ o.id }}?">
   <input type="hidden" name="_csrf" value="{{ request.state.csrf }}">
             <button class="btn btn-danger" type="submit">Удалить</button>
           </form>

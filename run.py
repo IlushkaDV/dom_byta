@@ -14,6 +14,19 @@ if __name__ == "__main__":
     parser.add_argument("--port", type=int, default=8000)
     parser.add_argument("--dev", action="store_true", help="авто-перезагрузка при изменениях")
     args = parser.parse_args()
+
+    # Показать секретный адрес админки (админка скрыта от посторонних)
+    try:
+        from app.main import ADMIN_BASE
+        print("=" * 56)
+        print("  Секретный адрес админки:" + ADMIN_BASE)
+        print("  Сохраните его: обычный /admin недоступен (404).")
+        print("  Свой адрес можно задать переменной окружения")
+        print("  ATELLE_ADMIN_PATH (например, ATELLE_ADMIN_PATH=kabinet7)")
+        print("=" * 56)
+    except Exception as e:  # noqa: BLE001
+        print("Не удалось показать адрес админки:", e)
+
     uvicorn.run(
         "app.main:app",
         host=args.host,
