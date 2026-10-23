@@ -9,3 +9,6 @@ app/static/uploads/*
 
 # Секретный адрес админки — не должен попадать в git
 data/.admin_path
+
+# Локальные секреты ( скопированный из .env.example )
+.env
