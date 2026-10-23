@@ -7,6 +7,7 @@
   <h2>Контент публичного сайта</h2>
   <p style="color:#8a8174;font-size:13.5px;margin-bottom:20px">Изменения сразу отображаются на сайте после сохранения.</p>
   <form method="post" action="/admin/settings" enctype="multipart/form-data">
+  <input type="hidden" name="_csrf" value="{{ request.state.csrf }}">
     <div class="form-grid">
       {% for key, label in fields %}
       <div class="field {% if key in ('about_text','hero_subtitle','manager_quote','hero_title','hero_kicker') or key in image_keys %}full{% endif %}">

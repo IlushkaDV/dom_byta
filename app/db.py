@@ -407,12 +407,15 @@ def init_db() -> None:
                     (t, b, a, p),
                 )
 
-        # Админ по умолчанию
+        # Админ по умолчанию. Пароль: переменная окружения ATELLE_ADMIN_PASSWORD,
+        # иначе временный admin123 (смените сразу после первого входа!).
+        import os as _os
         from .auth import hash_password
         if conn.execute("SELECT COUNT(*) c FROM admins").fetchone()["c"] == 0:
+            pwd = _os.environ.get("ATELLE_ADMIN_PASSWORD") or "admin123"
             conn.execute(
                 "INSERT INTO admins(login, password_hash) VALUES(?, ?)",
-                ("admin", hash_password("admin123")),
+                (_os.environ.get("ATELLE_ADMIN_LOGIN", "admin"), hash_password(pwd)),
             )
 
 

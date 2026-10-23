@@ -1,4 +1,6 @@
 """Меховое ателье «Дом Быта» — сайт + админ-панель (FastAPI)."""
+import hashlib
+import hmac
 import os
 import secrets
 import shutil
@@ -10,7 +12,8 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
 from . import db
-from .auth import hash_password, verify_password, make_session_token, check_session_token
+from .auth import (hash_password, verify_password, make_session_token,
+                   check_session_token, secret_bytes as _secret_bytes)
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 UPLOAD_DIR = os.path.join(BASE_DIR, "static", "uploads")
@@ -29,10 +32,21 @@ MAX_UPLOAD_BYTES = 15 * 1024 * 1024  # 15 МБ на файл
 
 def _security_headers(resp):
     resp.headers.setdefault("X-Content-Type-Options", "nosniff")
-    resp.headers.setdefault("X-Frame-Options", "SAMEORIGIN")
+    resp.headers.setdefault("X-Frame-Options", "DENY")
     resp.headers.setdefault("Referrer-Policy", "strict-origin-when-cross-origin")
     resp.headers.setdefault(
         "Permissions-Policy", "camera=(), microphone=(), geolocation=()")
+    # CSP: только свои ресурсы; inline-скрипты/стили сайта включены через
+    # 'unsafe-inline' (используются в шаблонах), внешние — шрифты Google и карты Яндекса.
+    csp = ("default-src 'self'; "
+           "script-src 'self' 'unsafe-inline' https://api-maps.yandex.ru; "
+           "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
+           "font-src 'self' https://fonts.gstatic.com; "
+           "img-src 'self' data: blob: https://*.yandex.ru https://*.ytimg.ru; "
+           "frame-src 'self' https://yandex.ru https://maps.yandex.ru; "
+           "connect-src 'self' https://api-maps.yandex.ru; "
+           "object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'")
+    resp.headers.setdefault("Content-Security-Policy", csp)
     return resp
 
 
@@ -55,6 +69,15 @@ def _login_blocked(ip: str) -> bool:
 
 def _login_fail(ip: str) -> None:
     _login_attempts[ip].append(_time.time())
+    # защита от разрастания памяти: чистим старые записи
+    if len(_login_attempts) > 5000:
+        cutoff = _time.time() - _LOGIN_WINDOW
+        for k in list(_login_attempts.keys()):
+            v = [t for t in _login_attempts[k] if t > cutoff]
+            if v:
+                _login_attempts[k] = v
+            else:
+                del _login_attempts[k]
 
 
 def _login_ok(ip: str) -> None:
@@ -67,6 +90,27 @@ def _client_ip(request: Request) -> str:
     if fwd:
         return fwd.split(",")[0].strip()
     return request.client.host if request.client else "?"
+
+
+# ---------- CSRF-защита админки ----------
+# Сессия на cookie + SameSite=Lax, но дополнительно проверяем токен формы.
+
+def _csrf_token(admin_login: str) -> str:
+    payload = f"csrf|{admin_login}"
+    sig = hmac.new(_secret_bytes(), payload.encode(), hashlib.sha256).hexdigest()
+    return sig[:32]
+
+
+def _check_csrf(request: Request, form_token: str | None) -> bool:
+    admin = get_current_admin(request)
+    if not admin:
+        return False
+    return hmac.compare_digest(form_token or "", _csrf_token(admin))
+
+
+def require_csrf(request: Request, csrf_check: str | None = Form(None, alias="_csrf")) -> None:
+    if not _check_csrf(request, csrf_check):
+        raise HTTPException(400, "Сессия устарела, обновите страницу")
 
 
 # ---------- helpers ----------
@@ -94,6 +138,11 @@ def redirect(url: str, flash: str | None = None) -> RedirectResponse:
 
 @app.middleware("http")
 async def flash_middleware(request: Request, call_next):
+    # CSRF-токен для админ-форм (доступен в шаблонах как request.state.csrf)
+    request.state.csrf = ""
+    adm = get_current_admin(request)
+    if adm:
+        request.state.csrf = _csrf_token(adm)
     try:
         response = await call_next(request)
     except HTTPException as exc:
@@ -291,7 +340,7 @@ def admin_orders(request: Request, admin: str = Depends(require_admin), status: 
 
 
 @app.post("/admin/orders/{order_id}/status")
-def admin_order_status(order_id: int, status: str = Form(...), admin: str = Depends(require_admin)):
+def admin_order_status(order_id: int, request: Request, status: str = Form(...), admin: str = Depends(require_admin), _: None = Depends(require_csrf)):
     if status not in ORDERS_STATUS_LABELS:
         raise HTTPException(400)
     with db.db() as conn:
@@ -300,7 +349,7 @@ def admin_order_status(order_id: int, status: str = Form(...), admin: str = Depe
 
 
 @app.post("/admin/orders/{order_id}/delete")
-def admin_order_delete(order_id: int, admin: str = Depends(require_admin)):
+def admin_order_delete(order_id: int, request: Request, admin: str = Depends(require_admin), _csrf_ok: None = Depends(require_csrf)):
     with db.db() as conn:
         conn.execute("DELETE FROM orders WHERE id=?", (order_id,))
     return redirect("/admin/orders")
@@ -332,10 +381,12 @@ def _service_form(id_: int | None, title: str, description: str, price: str, cat
 
 @app.post("/admin/services/save")
 def admin_service_save(
+    request: Request,
     admin: str = Depends(require_admin),
     id: int = Form(0), title: str = Form(...), description: str = Form(""),
     price: str = Form(""), category: str = Form("Пошив"),
     sort_order: int = Form(0), is_active: str | None = Form(None),
+    _csrf_ok: None = Depends(require_csrf),
 ):
     if not title.strip():
         raise HTTPException(400, "Название обязательно")
@@ -345,7 +396,7 @@ def admin_service_save(
 
 
 @app.post("/admin/services/{service_id}/delete")
-def admin_service_delete(service_id: int, admin: str = Depends(require_admin)):
+def admin_service_delete(service_id: int, request: Request, admin: str = Depends(require_admin), _csrf_ok: None = Depends(require_csrf)):
     with db.db() as conn:
         conn.execute("DELETE FROM services WHERE id=?", (service_id,))
     return redirect("/admin/services")
@@ -368,8 +419,10 @@ def admin_advantages(request: Request, admin: str = Depends(require_admin)):
 
 @app.post("/admin/advantages/save")
 def admin_advantage_save(
+    request: Request,
     admin: str = Depends(require_admin),
     id: int = Form(0), icon: str = Form(""), title: str = Form(...), text: str = Form(""),
+    _csrf_ok: None = Depends(require_csrf),
 ):
     if not title.strip():
         raise HTTPException(400, "Название обязательно")
@@ -384,7 +437,7 @@ def admin_advantage_save(
 
 
 @app.post("/admin/advantages/{adv_id}/delete")
-def admin_advantage_delete(adv_id: int, admin: str = Depends(require_admin)):
+def admin_advantage_delete(adv_id: int, request: Request, admin: str = Depends(require_admin), _csrf_ok: None = Depends(require_csrf)):
     with db.db() as conn:
         conn.execute("DELETE FROM advantages WHERE id=?", (adv_id,))
     return redirect("/admin/advantages")
@@ -393,6 +446,7 @@ def admin_advantage_delete(adv_id: int, admin: str = Depends(require_admin)):
 @app.post("/admin/advantages/text")
 async def admin_advantage_text_save(
     request: Request, admin: str = Depends(require_admin),
+    _csrf_ok: None = Depends(require_csrf),
 ):
     form = await request.form()
     for k in form.keys():
@@ -555,7 +609,7 @@ def _clean_work_texts(before: str, after: str, title: str) -> tuple[str, str]:
 
 
 @app.post("/admin/gallery/migrate")
-def admin_gallery_migrate(admin: str = Depends(require_admin)):
+def admin_gallery_migrate(request: Request, admin: str = Depends(require_admin), _csrf_ok: None = Depends(require_csrf)):
     """Разово перенести старые одиночные фото в слоты «До»/«После»."""
     moved = 0
     with db.db() as conn:
@@ -576,7 +630,7 @@ def admin_gallery_migrate(admin: str = Depends(require_admin)):
 
 
 @app.post("/admin/gallery/{item_id}/delete")
-def admin_gallery_delete(item_id: int, admin: str = Depends(require_admin)):
+def admin_gallery_delete(item_id: int, request: Request, admin: str = Depends(require_admin), _csrf_ok: None = Depends(require_csrf)):
     with db.db() as conn:
         row = conn.execute("SELECT image_path, before_image_path, after_image_path FROM gallery_items WHERE id=?",
                            (item_id,)).fetchone()
@@ -605,9 +659,11 @@ def admin_reviews(request: Request, admin: str = Depends(require_admin)):
 
 @app.post("/admin/reviews/save")
 def admin_review_save(
+    request: Request,
     admin: str = Depends(require_admin),
     id: int = Form(0), author: str = Form(...), rating: int = Form(5),
     text: str = Form(...), is_public: str | None = Form(None),
+    _csrf_ok: None = Depends(require_csrf),
 ):
     if not author.strip() or not text.strip():
         raise HTTPException(400, "Автор и текст обязательны")
@@ -623,7 +679,7 @@ def admin_review_save(
 
 
 @app.post("/admin/reviews/{review_id}/delete")
-def admin_review_delete(review_id: int, admin: str = Depends(require_admin)):
+def admin_review_delete(review_id: int, request: Request, admin: str = Depends(require_admin), _csrf_ok: None = Depends(require_csrf)):
     with db.db() as conn:
         conn.execute("DELETE FROM reviews WHERE id=?", (review_id,))
     return redirect("/admin/reviews")
@@ -717,7 +773,7 @@ def admin_settings(request: Request, admin: str = Depends(require_admin)):
 
 
 @app.post("/admin/settings")
-async def admin_settings_save(request: Request, admin: str = Depends(require_admin)):
+async def admin_settings_save(request: Request, admin: str = Depends(require_admin), _csrf_ok: None = Depends(require_csrf)):
     form = await request.form()
     for key, _label in SETTING_FIELDS:
         if key in IMAGE_SETTINGS:
@@ -749,8 +805,10 @@ def admin_password_page(request: Request, admin: str = Depends(require_admin)):
 
 @app.post("/admin/password")
 def admin_password_change(
+    request: Request,
     old: str = Form(...), new: str = Form(...), confirm: str = Form(...),
     admin: str = Depends(require_admin),
+    _csrf_ok: None = Depends(require_csrf),
 ):
     if new != confirm or len(new) < 6:
         return redirect("/admin/password?err=short")

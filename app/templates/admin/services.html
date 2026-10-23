@@ -21,6 +21,7 @@
         <td style="white-space:nowrap">
           <button class="btn btn-sm" data-open="svcModal" data-edit='{{ srv | tojson }}' onclick="fillSvc(this)">✏️ Изменить</button>
           <form method="post" action="/admin/services/{{ srv.id }}/delete" data-confirm="Удалить услугу «{{ srv.title }}»?" style="display:inline">
+  <input type="hidden" name="_csrf" value="{{ request.state.csrf }}">
             <button class="btn btn-danger" type="submit">Удалить</button>
           </form>
         </td>
@@ -36,6 +37,7 @@
     <button type="button" class="modal-close">×</button>
     <h2 id="svcTitle">Новая услуга</h2>
     <form method="post" action="/admin/services/save" id="svcForm">
+  <input type="hidden" name="_csrf" value="{{ request.state.csrf }}">
       <input type="hidden" name="id" value="0">
       <div class="form-grid">
         <div class="field full"><label>Название *</label><input type="text" name="title" required placeholder="Например: Пошив шубы по меркам"></div>

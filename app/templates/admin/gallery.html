@@ -9,6 +9,7 @@
     <div style="display:flex;gap:8px">
       {% if items | selectattr('image_path') | rejectattr('before_image_path') | list or items | selectattr('image_path') | selectattr('before_image_path') | rejectattr('after_image_path') | list %}
       <form method="post" action="/admin/gallery/migrate" style="display:inline">
+  <input type="hidden" name="_csrf" value="{{ request.state.csrf }}">
         <button class="btn btn-sm" type="submit" title="Перенести старые одиночные фото в слоты «До»/«После», чтобы появился слайдер сравнения">⟳ Перенести старые фото</button>
       </form>
       {% endif %}
@@ -29,6 +30,7 @@
         <td style="white-space:nowrap">
           <button class="btn btn-sm" data-open="galModal" data-edit='{{ g | tojson }}'>✏️ Изменить</button>
           <form method="post" action="/admin/gallery/{{ g.id }}/delete" data-confirm="Удалить работу «{{ g.title }}»?" style="display:inline">
+  <input type="hidden" name="_csrf" value="{{ request.state.csrf }}">
             <button class="btn btn-danger" type="submit">Удалить</button>
           </form>
         </td>
@@ -43,6 +45,7 @@
     <button type="button" class="modal-close">×</button>
     <h2>Работа в галерее</h2>
     <form method="post" action="/admin/gallery/save" enctype="multipart/form-data" id="galForm">
+  <input type="hidden" name="_csrf" value="{{ request.state.csrf }}">
       <input type="hidden" name="id" value="0">
       <div class="form-grid">
         <div class="field full"><label>Название *</label><input type="text" name="title" required placeholder="Например: Реставрация шубы"></div>
