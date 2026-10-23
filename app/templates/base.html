@@ -87,7 +87,7 @@
   </div>
   <div class="container footer-bottom">
     <span>© {{ year | default(2026) }} Ателье в ТЦ «Дом Быта», Хабаровск · <a href="/privacy" class="footer-privacy">Политика обработки персональных данных</a></span>
-    {% if admin is defined and admin %}
+    {% if admin is defined and admin and request.url.path.startswith(admin_base) %}
     <a href="{{ admin_base }}/logout" class="footer-admin btn btn-sm">⚙ Панель управления — выйти</a>
     {% endif %}
   </div>
