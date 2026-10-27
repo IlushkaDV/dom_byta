@@ -39,7 +39,7 @@ const IMAGE_SETTINGS = ['manager_photo', 'manager_signature', 'hero_image', 'her
 
 function aview(string $file, array $data = []): void {
     extract($data, EXTR_SKIP);
-    require __DIR__ . '/views/admin/' . $file . '.php';
+    require dirname(__FILE__) . '/views/admin/' . $file . '.php';
     exit;
 }
 

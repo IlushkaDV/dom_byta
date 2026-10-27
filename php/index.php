@@ -34,7 +34,7 @@ $isPost = $_SERVER['REQUEST_METHOD'] === 'POST';
 
 function view(string $file, array $data = []): void {
     extract($data, EXTR_SKIP);
-    require __DIR__ . '/views/' . $file . '.php';
+    require dirname(__FILE__) . '/views/' . $file . '.php';
 }
 
 /* ---------- статика и загрузка заявок в админке ---------- */
