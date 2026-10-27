@@ -3,4 +3,5 @@ Allow: /
 Disallow: /data/
 Disallow: /uploads/
 Disallow: /*?*=
+Sitemap: https://atelier-db.ru/sitemap-yandex.xml
 Sitemap: https://atelier-db.ru/sitemap.xml

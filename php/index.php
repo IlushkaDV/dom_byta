@@ -147,6 +147,9 @@ if ($path === '/privacy') {
 if ($path === '/admin' || strpos($path, '/admin/') === 0) {
     http_response_code(404); exit('Не найдено');   // обычный /admin скрыт
 }
+if ($path === '/sitemap-yandex.xml') {
+    require __DIR__ . '/sitemap-yandex.php'; exit;
+}
 if ($path === '/sitemap.xml') {
     require __DIR__ . '/sitemap.php'; exit;
 }
