@@ -12,11 +12,19 @@ security_headers();
 init_db();
 
 $path = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/';
+// base_url() возвращает ПОЛНЫЙ URL (http://host[/подпапка]) — берём только путь от него,
+// иначе префикс вида "/assets/css" ошибочно вырезается из начала пути запроса
 $base = base_url();
-if ($base !== '' && strpos($path, $base) === 0) {
-    $path = substr($path, strlen($base));
+if (preg_match('#^(?:https?://[^/]+)?(/.*)?$#', $base, $bm)) {
+    $basePath = $bm[1] ?? '';
+} else {
+    $basePath = '';
+}
+if ($basePath !== '' && $basePath !== '/' && strpos($path, $basePath) === 0) {
+    $path = substr($path, strlen($basePath));
 }
 $path = rtrim($path, '/') ?: '/';
+if (PHP_SAPI !== 'cli') { error_log('DBG raw=[' . ($_SERVER['REQUEST_URI']??'?') . '] sn=[' . ($_SERVER['SCRIPT_NAME']??'?') . '] path=[' . $path . '] base=[' . base_url() . ']'); }
 $AB = admin_base();          // например /admin-a1b2c3d4
 $isPost = $_SERVER['REQUEST_METHOD'] === 'POST';
 
