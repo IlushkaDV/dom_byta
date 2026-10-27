@@ -42,7 +42,7 @@
   <?php else: ?>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧵</text></svg>">
   <?php endif; ?>
-  <link rel="stylesheet" href="<?= e(url('/assets/css/style.css')) ?>?v=20261022c">
+  <link rel="stylesheet" href="<?= e(url('/assets/css/style.css')) ?>?v=20261022d">
 </head>
 <body>
 
@@ -167,6 +167,6 @@
   } catch (e) {}
 })();
 </script>
-<script src="<?= e(url('/assets/js/main.js')) ?>?v=20261022c"></script>
+<script src="<?= e(url('/assets/js/main.js')) ?>?v=20261022d"></script>
 </body>
 </html>

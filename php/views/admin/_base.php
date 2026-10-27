@@ -12,7 +12,7 @@
   <?php else: ?>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧵</text></svg>">
   <?php endif; ?>
-  <link rel="stylesheet" href="<?= e(url('/assets/css/admin.css')) ?>?v=20261022b">
+  <link rel="stylesheet" href="<?= e(url('/assets/css/admin.css')) ?>?v=20261022d">
 </head>
 <body>
 <div class="admin-layout">
@@ -49,6 +49,6 @@
     </div>
   </div>
 </div>
-<script src="<?= e(url('/assets/js/admin.js')) ?>?v=20261022b"></script>
+<script src="<?= e(url('/assets/js/admin.js')) ?>?v=20261022d"></script>
 </body>
 </html>

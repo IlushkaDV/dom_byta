@@ -39,9 +39,17 @@ CREATE TABLE IF NOT EXISTS orders (
   id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, phone TEXT NOT NULL, email TEXT NOT NULL DEFAULT '',
   service TEXT NOT NULL DEFAULT '', message TEXT NOT NULL DEFAULT '', status TEXT NOT NULL DEFAULT 'new',
   pd_consent_at TEXT NOT NULL DEFAULT '', visit_date TEXT NOT NULL DEFAULT '', visit_time TEXT NOT NULL DEFAULT '',
+  photo_path TEXT NOT NULL DEFAULT '',
   created_at TEXT NOT NULL DEFAULT (datetime('now','localtime')));
 CREATE TABLE IF NOT EXISTS admins (
   id INTEGER PRIMARY KEY AUTOINCREMENT, login TEXT NOT NULL UNIQUE, password_hash TEXT NOT NULL);");
+
+    // Автомиграция: добавляем недостающие колонки в существующую базу
+    $ocols = [];
+    foreach ($d->query("PRAGMA table_info(orders)") as $r) { $ocols[$r['name']] = true; }
+    if (!isset($ocols['photo_path'])) {
+        $d->exec("ALTER TABLE orders ADD COLUMN photo_path TEXT NOT NULL DEFAULT ''");
+    }
 
     // Дефолты
     $stmt = $d->prepare("INSERT OR IGNORE INTO settings(key,value) VALUES(?,?)");

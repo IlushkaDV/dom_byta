@@ -51,12 +51,18 @@ if ($isPost) {
         if ($name === '' || $phone === '') redirect(url('/?sent=error#order'));
         if (empty($_POST['consent'])) redirect(url('/?sent=noconsent#order'));
         $ip = client_ip();
-        db()->prepare("INSERT INTO orders(name,phone,email,service,message,visit_date,visit_time,pd_consent_at)
-                       VALUES(?,?,?,?,?,?,?,?)")
+        // Фото изделия (необязательно): сохраняем только валидное изображение
+        $photoPath = '';
+        if (!empty($_FILES['photo']) && ($_FILES['photo']['error'] ?? UPLOAD_ERR_NO_FILE) === UPLOAD_ERR_OK) {
+            $saved = save_upload($_FILES['photo']);
+            if ($saved !== null) $photoPath = $saved;
+        }
+        db()->prepare("INSERT INTO orders(name,phone,email,service,message,visit_date,visit_time,pd_consent_at,photo_path)
+                       VALUES(?,?,?,?,?,?,?,?,?)")
            ->execute([$name, $phone, trim($_POST['email'] ?? ''), trim($_POST['service'] ?? ''),
                       trim($_POST['message'] ?? ''), trim($_POST['visit_date'] ?? ''),
                       trim($_POST['visit_time'] ?? ''),
-                      date('Y-m-d H:i') . " с IP {$ip}"]);
+                      date('Y-m-d H:i') . " с IP {$ip}", $photoPath]);
         redirect(url('/?sent=ok#order'));
     }
     admin_post($path, $AB);

@@ -24,6 +24,11 @@
         </td>
         <td><?= e($o['service'] ?: '—') ?></td>
         <td style="max-width:260px">
+          <?php if (!empty($o['photo_path'])): ?>
+          <a href="<?= e(url($o['photo_path'])) ?>" target="_blank" rel="noopener" title="Открыть в полном размере">
+            <img src="<?= e(url($o['photo_path'])) ?>" alt="Фото изделия" class="order-photo">
+          </a>
+          <?php endif; ?>
           <?php if (!empty($o['visit_date']) || !empty($o['visit_time'])): ?>
           <div class="order-visit">📅 <?= e($o['visit_date']) ?><?= $o['visit_time'] ? ' в ' . e($o['visit_time']) : '' ?></div>
           <?php endif; ?>

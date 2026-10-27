@@ -163,6 +163,10 @@ function admin_post(string $path, string $AB): void {
         redirect(url($AB . '/orders'));
     }
     if (preg_match('#^/orders/(\d+)/delete$#', $sub, $m)) {
+        $sel = db()->prepare("SELECT photo_path FROM orders WHERE id=?");
+        $sel->execute([(int)$m[1]]);
+        $ph = $sel->fetchColumn();
+        if ($ph) remove_upload($ph);
         $st = db()->prepare("DELETE FROM orders WHERE id=?");
         $st->execute([(int)$m[1]]);
         redirect(url($AB . '/orders'));
