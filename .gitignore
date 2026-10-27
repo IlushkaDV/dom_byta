@@ -1,17 +1,8 @@
 __pycache__/
 *.pyc
 *.log
-server.log
-data/atele.db
-data/.secret_key
-app/static/uploads/*
-!app/static/uploads/.gitkeep
-
-# Секретный адрес админки — не должен попадать в git
-data/.admin_path
-
-# Локальные секреты ( скопированный из .env.example )
 .env
-
-# локальная сборка для хостинга (не публикуется)
-release/
+.env.local
+*.env.*
+*.db
+*.sqlite

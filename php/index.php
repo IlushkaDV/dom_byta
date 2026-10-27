@@ -1,0 +1,144 @@
+<?php
+/* Ателье в Доме Быта — atelier-db.ru
+   Единая точка входа: витрина + админка (секретный путь). Чистый PHP 8, SQLite. */
+
+require __DIR__ . '/defaults.php';
+require __DIR__ . '/helpers.php';
+require __DIR__ . '/db.php';
+require __DIR__ . '/admin.php';
+
+session_start();
+security_headers();
+init_db();
+
+$path = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/';
+$base = base_url();
+if ($base !== '' && strpos($path, $base) === 0) {
+    $path = substr($path, strlen($base));
+}
+$path = rtrim($path, '/') ?: '/';
+$AB = admin_base();          // например /admin-a1b2c3d4
+$isPost = $_SERVER['REQUEST_METHOD'] === 'POST';
+
+function view(string $file, array $data = []): void {
+    extract($data, EXTR_SKIP);
+    require __DIR__ . '/views/' . $file . '.php';
+}
+
+/* ---------- статика и загрузка заявок в админке ---------- */
+if ($isPost) {
+    if ($path === '/order') {
+        $name = trim($_POST['name'] ?? '');
+        $phone = trim($_POST['phone'] ?? '');
+        if ($name === '' || $phone === '') redirect(url('/?sent=error#order'));
+        if (empty($_POST['consent'])) redirect(url('/?sent=noconsent#order'));
+        $ip = client_ip();
+        db()->prepare("INSERT INTO orders(name,phone,email,service,message,visit_date,visit_time,pd_consent_at)
+                       VALUES(?,?,?,?,?,?,?,?)")
+           ->execute([$name, $phone, trim($_POST['email'] ?? ''), trim($_POST['service'] ?? ''),
+                      trim($_POST['message'] ?? ''), trim($_POST['visit_date'] ?? ''),
+                      trim($_POST['visit_time'] ?? ''),
+                      date('Y-m-d H:i') . " с IP {$ip}"]);
+        redirect(url('/?sent=ok#order'));
+    }
+    admin_post($path, $AB);
+    http_response_code(404); exit('Не найдено');
+}
+
+/* ---------- GET: статические файлы, uploads, админка, витрина ---------- */
+if ($path === '/favicon.ico') {
+    $fav = cfg()['upload_dir'] . '/favicon/favicon.ico';
+    if (is_file($fav)) { header('Content-Type: image/x-icon'); readfile($fav); exit; }
+    redirect(url('/'));
+}
+foreach (['/assets', '/uploads'] as $pre) {
+    if (strpos($path, $pre . '/') === 0) {
+        $rel = substr($path, strlen($pre) + 1);
+        $dir = $pre === '/assets' ? __DIR__ . '/assets' : cfg()['upload_dir'];
+        $real = realpath($dir . '/' . $rel);
+        $root = realpath($dir);
+        if ($real === false || $root === false || strpos($real, $root . DIRECTORY_SEPARATOR) !== 0 || !is_file($real)) {
+            http_response_code(404); exit('Не найдено');
+        }
+        $types = ['css'=>'text/css','js'=>'application/javascript','svg'=>'image/svg+xml',
+                  'png'=>'image/png','jpg'=>'image/jpeg','jpeg'=>'image/jpeg','webp'=>'image/webp',
+                  'gif'=>'image/gif','ico'=>'image/x-icon'];
+        $ext = strtolower(pathinfo($real, PATHINFO_EXTENSION));
+        header('Content-Type: ' . ($types[$ext] ?? 'application/octet-stream'));
+        header('Cache-Control: public, max-age=604800');
+        readfile($real); exit;
+    }
+}
+
+/* ---------- витрина ---------- */
+if ($path === '/') {
+    $s = get_settings();
+    $services = db()->query("SELECT * FROM services WHERE is_active=1 ORDER BY sort_order, id")->fetchAll();
+    $advantages = db()->query("SELECT * FROM advantages ORDER BY id")->fetchAll();
+    $gallery = db()->query("SELECT * FROM gallery_items ORDER BY id DESC LIMIT 6")->fetchAll();
+    $reviews = db()->query("SELECT * FROM reviews WHERE is_public=1 ORDER BY created_at DESC, id DESC LIMIT 6")->fetchAll();
+
+    // направления -> вкладки цен
+    $groups = [
+        'meh'    => ['Пошив меха', 'Пошив меха с перекроем', 'Ремонт меха'],
+        'kozha'  => ['Пошив кожи', 'Ремонт кожи и дублёнок'],
+        'poshiv' => ['Пошив верхней одежды', 'Пошив лёгкого платья'],
+        'remont' => ['Ремонт верхней одежды', 'Ремонт лёгкой одежды'],
+    ];
+    $byCat = [];
+    foreach ($services as $srv) { $byCat[$srv['category']][] = $srv; }
+    $used = array_merge(...array_values($groups));
+    $leftover = [];
+    foreach ($byCat as $cat => $items) {
+        if (!in_array($cat, $used, true)) $leftover = array_merge($leftover, $items);
+    }
+    $priceTabs = [];
+    foreach (DEFAULT_DIRECTIONS() as $d) {
+        $items = [];
+        foreach ($groups[$d['tab']] ?? [] as $cat) $items = array_merge($items, $byCat[$cat] ?? []);
+        if ($d['tab'] === 'remont') $items = array_merge($items, $leftover);
+        if ($items) $priceTabs[] = ['dir' => $d, 'items' => $items];
+    }
+
+    // фото карточек направлений: настройка -> фото галереи той же категории -> любое
+    $galImgs = [];
+    foreach ($gallery as $g) {
+        $galImgs[] = $g['before_image_path'] ?: $g['image_path'];
+        $galImgs[] = $g['after_image_path'];
+    }
+    $fallback = '';
+    foreach ($galImgs as $p) if ($p !== '') { $fallback = $p; break; }
+    $directions = [];
+    foreach (DEFAULT_DIRECTIONS() as $d) {
+        $img = trim($s[$d['image_key']] ?? '');
+        if ($img === '') {
+            $row = db()->prepare("SELECT image_path, before_image_path FROM gallery_items WHERE category=? ORDER BY id DESC LIMIT 1");
+            $row->execute([$d['title']]);
+            $r = $row->fetch();
+            if ($r) $img = $r['image_path'] ?: $r['before_image_path'];
+        }
+        if ($img === '') $img = $fallback;
+        $d['image'] = $img;
+        $directions[] = $d;
+    }
+
+    view('index', compact('s','services','advantages','gallery','reviews','priceTabs','directions') + ['steps' => DEFAULT_STEPS()]);
+    exit;
+}
+
+if ($path === '/privacy') {
+    view('privacy', ['s' => get_settings(), 'policy_updated' => '01.10.2026']);
+    exit;
+}
+
+/* ---------- админка: GET ---------- */
+if ($path === '/admin' || strpos($path, '/admin/') === 0) {
+    http_response_code(404); exit('Не найдено');   // обычный /admin скрыт
+}
+if ($path === $AB || strpos($path, $AB . '/') === 0) {
+    admin_get($path, $AB);
+    http_response_code(404); exit('Не найдено');
+}
+
+http_response_code(404);
+view('404', ['s' => get_settings()]);
