@@ -210,11 +210,19 @@ function make_favicon(string $srcUrlPath): void {
         imagepng($out, "$dir/favicon-$sz.png");
         imagedestroy($out);
     }
-    // .ico 32x32 (простейший контейнер)
-    $ico = fopen("$dir/favicon.ico", 'wb');
-    $pngData = file_get_contents("$dir/favicon-32.png");
-    fwrite($ico, pack('vvv', 0, 1, 1) . pack('CCCCvvVv', 32, 32, 0, 0, 1, 32, strlen($pngData), 22, 0) . $pngData);
-    fclose($ico);
+    // .ico 32x32 (контейнер: PNG внутри ICO — поддерживается всеми браузерами)
+    $pngData = @file_get_contents("$dir/favicon-32.png");
+    if ($pngData !== false) {
+        $ico = @fopen("$dir/favicon.ico", 'wb');
+        if ($ico) {
+            fwrite($ico, pack('v', 0) . pack('v', 1) . pack('v', 1)
+                 . pack('C', 32) . pack('C', 32) . pack('C', 0) . pack('C', 0)
+                 . pack('v', 1) . pack('v', 32)
+                 . pack('V', strlen($pngData)) . pack('V', 22)
+                 . $pngData);
+            fclose($ico);
+        }
+    }
     imagedestroy($im);
 }
 

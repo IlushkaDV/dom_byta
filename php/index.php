@@ -2,6 +2,12 @@
 /* Ателье в Доме Быта — atelier-db.ru
    Единая точка входа: витрина + админка (секретный путь). Чистый PHP 8, SQLite. */
 
+// На боевом хостинге не показываем ошибки/предупреждения посетителям
+// (они ломают заголовки и куки). Логи ошибок — в логах сервера.
+error_reporting(E_ALL);
+ini_set('display_errors', '0');
+ini_set('log_errors', '1');
+
 require __DIR__ . '/defaults.php';
 require __DIR__ . '/helpers.php';
 require __DIR__ . '/db.php';
