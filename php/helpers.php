@@ -9,12 +9,16 @@ function base_url(): string {
     // поддержка подпапки (например site.ru/atele/) и корня домена
     static $b = null;
     if ($b === null) {
-        $script = str_replace('\\', '/', $_SERVER['SCRIPT_NAME'] ?? '/index.php');
-        $dir = rtrim(dirname($script), '/');
-        // dirname('/index.php') даёт '/' → после rtrim это '' — ок;
-        // но при CLI/некоторых окружениях может быть '.', нормализуем
-        if ($dir === '.' || $dir === '/') $dir = '';
-        $b = $dir;
+        $sn = str_replace('\\', '/', $_SERVER['SCRIPT_NAME'] ?? '');
+        // Префикс-подпапка определяется ТОЛЬКО по расположению index.php: SCRIPT_NAME = <префикс>/index.php.
+        // На запросах статики (php -S или misconfig) в SCRIPT_NAME попадает путь самого файла —
+        // тогда префикс считаем пустым, иначе он ошибочно вырезается из URL.
+        $b = '';
+        if (substr($sn, -10) === '/index.php') {
+            $b = rtrim(substr($sn, 0, -10), '/');
+        } elseif ($sn === '') {
+            $b = ''; // CLI
+        }
     }
     return $b;
 }

@@ -12,19 +12,23 @@ security_headers();
 init_db();
 
 $path = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/';
-// base_url() возвращает ПОЛНЫЙ URL (http://host[/подпапка]) — берём только путь от него,
-// иначе префикс вида "/assets/css" ошибочно вырезается из начала пути запроса
-$base = base_url();
-if (preg_match('#^(?:https?://[^/]+)?(/.*)?$#', $base, $bm)) {
-    $basePath = $bm[1] ?? '';
-} else {
-    $basePath = '';
+/* Определяем подпапку-префикс ТОЛЬКО по расположению index.php:
+   SCRIPT_NAME = <префикс>/index.php. Иначе встроенный сервер PHP на запросах статики
+   подставляет в SCRIPT_NAME сам путь файла (/assets/css/style.css), и префикс «/assets/css»
+   ошибочно вырезался из URL. */
+$scheme = (($_SERVER['HTTPS'] ?? '') === 'on' || ($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '') === 'https') ? 'https' : 'http';
+$prefix = '';
+if (PHP_SAPI !== 'cli') {
+    $sn = str_replace('\\', '/', $_SERVER['SCRIPT_NAME'] ?? '');
+    if (substr($sn, -10) === '/index.php') {
+        $prefix = rtrim(substr($sn, 0, -10), '/'); // '', '/site', '/sub/dir'
+    }
 }
-if ($basePath !== '' && $basePath !== '/' && strpos($path, $basePath) === 0) {
-    $path = substr($path, strlen($basePath));
+if ($prefix !== '' && $prefix !== '/' && strpos($path, $prefix) === 0) {
+    $rest = substr($path, strlen($prefix));
+    $path = $rest === '' ? '/' : $rest;
 }
 $path = rtrim($path, '/') ?: '/';
-if (PHP_SAPI !== 'cli') { error_log('DBG raw=[' . ($_SERVER['REQUEST_URI']??'?') . '] sn=[' . ($_SERVER['SCRIPT_NAME']??'?') . '] path=[' . $path . '] base=[' . base_url() . ']'); }
 $AB = admin_base();          // например /admin-a1b2c3d4
 $isPost = $_SERVER['REQUEST_METHOD'] === 'POST';
 
