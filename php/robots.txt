@@ -1,0 +1,6 @@
+User: *
+Allow: /
+Disallow: /data/
+Disallow: /uploads/
+Disallow: /*?*=
+Sitemap: https://atelier-db.ru/sitemap.xml

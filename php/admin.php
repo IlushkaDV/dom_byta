@@ -7,6 +7,10 @@ const ORDERS_STATUS_LABELS = ['new' => 'Новая', 'in_progress' => 'В раб
 const SETTING_FIELDS = [
     ["site_name", "Название сайта"],
     ["tagline", "Короткий слоган (meta-описание)"],
+    ["site_url", "Адрес сайта для поисковиков (https://atelier-db.ru)"],
+    ["seo_title", "SEO: заголовок вкладки браузера (до 70 символов)"],
+    ["seo_description", "SEO: описание для Google/Yandex (до 160 символов)"],
+    ["seo_keywords", "SEO: ключевые слова через запятую"],
     ["hero_kicker", "Надзаголовок на первом экране"],
     ["hero_title", "Заголовок на первом экране"],
     ["hero_subtitle", "Подзаголовок на первом экране"],

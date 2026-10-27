@@ -147,6 +147,13 @@ if ($path === '/privacy') {
 if ($path === '/admin' || strpos($path, '/admin/') === 0) {
     http_response_code(404); exit('Не найдено');   // обычный /admin скрыт
 }
+if ($path === '/sitemap.xml') {
+    require __DIR__ . '/sitemap.php'; exit;
+}
+if ($path === '/robots.txt') {
+    header('Content-Type: text/plain; charset=utf-8');
+    readfile(__DIR__ . '/robots.txt'); exit;
+}
 if ($path === $AB || strpos($path, $AB . '/') === 0) {
     admin_get($path, $AB);
     http_response_code(404); exit('Не найдено');

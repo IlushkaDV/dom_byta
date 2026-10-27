@@ -4,8 +4,35 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title><?= e($title ?? ($s['site_name'] ?? '')) ?></title>
-  <meta name="description" content="<?= e($desc ?? ($s['tagline'] ?? '')) ?>">
+  <title><?= e($title ?? trim(($s['seo_title'] ?? '') ?: (($s['site_name'] ?? '') . ' — пошив и ремонт меха, кожи и одежды в Хабаровске'))) ?></title>
+  <meta name="description" content="<?= e($desc ?? trim(($s['seo_description'] ?? '') ?: ($s['tagline'] ?? ''))) ?>">
+  <meta name="keywords" content="<?= e($s['seo_keywords'] ?? 'ателье Хабаровск, пошив шуб, перекрой шубы, ремонт меха, ателье Дом Быта, пошив кожи, подгонка одежды Хабаровск') ?>">
+  <?php $canon = rtrim($s['site_url'] ?? '', '/'); if ($canon !== ''): ?>
+  <link rel="canonical" href="<?= e($canon . ($canonical_path ?? '/')) ?>">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="<?= e($s['site_name'] ?? '') ?>">
+  <meta property="og:title" content="<?= e($title ?? ($s['site_name'] ?? '')) ?>">
+  <meta property="og:description" content="<?= e($desc ?? ($s['tagline'] ?? '')) ?>">
+  <meta property="og:url" content="<?= e($canon . ($canonical_path ?? '/')) ?>">
+  <?php endif; ?>
+  <meta name="robots" content="index, follow">
+  <meta name="theme-color" content="#1A1A1A">
+  <script type="application/ld+json"><?= json_encode([
+      '@context' => 'https://schema.org',
+      '@type' => 'LocalBusiness',
+      'name' => ($s['site_name'] ?? 'Ателье') . ' — ТЦ «Дом Быта»',
+      'description' => $s['tagline'] ?? '',
+      'url' => ($s['site_url'] ?? '') ?: null,
+      'telephone' => $s['phone'] ?? '',
+      'priceRange' => '₽₽',
+      'address' => [
+          '@type' => 'PostalAddress',
+          'addressLocality' => $s['city'] ?? 'Хабаровск',
+          'streetAddress' => $s['address'] ?? '',
+          'addressCountry' => 'RU',
+      ],
+      'openingHours' => ['Mo-Fr 10:00-20:00', 'Sa-Su 10:00-19:00'],
+  ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
