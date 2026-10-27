@@ -104,8 +104,8 @@ function require_admin(): string {
 function csrf_token(string $login): string {
     return substr(hash_hmac('sha256', "csrf|$login", secret_bytes()), 0, 32);
 }
-function csrf_field(): string {
-    $a = current_admin();
+function csrf_field(?string $login = null): string {
+    $a = $login ?? current_admin();
     return '<input type="hidden" name="_csrf" value="' . e($a ? csrf_token($a) : '') . '">';
 }
 function check_csrf(): void {

@@ -53,7 +53,7 @@ function admin_get(string $path, string $AB): void {
 
     if ($sub === '/login') {
         if (current_admin()) redirect(url($AB));
-        aview('login', ['error' => '', 'AB' => $AB]);
+        aview('login', ['error' => '', 'AB' => $AB, 'csrf_login' => cfg()['admin_login']]);
     }
     if ($sub === '/logout') {
         clear_admin_cookie();
@@ -132,7 +132,7 @@ function admin_post(string $path, string $AB): void {
         $ip = client_ip();
         if (login_blocked($ip)) {
             http_response_code(429);
-            aview('login', ['error' => 'Слишком много попыток входа. Подождите 15 минут.', 'AB' => $AB]);
+            aview('login', ['error' => 'Слишком много попыток входа. Подождите 15 минут.', 'AB' => $AB, 'csrf_login' => cfg()['admin_login']]);
         }
         $login = trim($_POST['login_name'] ?? '');
         $pass  = (string)($_POST['password'] ?? '');
@@ -146,7 +146,7 @@ function admin_post(string $path, string $AB): void {
             redirect(url($AB));
         }
         login_fail($ip);
-        aview('login', ['error' => 'Неверный логин или пароль.', 'AB' => $AB]);
+        aview('login', ['error' => 'Неверный логин или пароль.', 'AB' => $AB, 'csrf_login' => $login !== '' ? $login : cfg()['admin_login']]);
     }
 
     /* всё остальное — только под админом + CSRF */

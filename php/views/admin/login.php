@@ -15,6 +15,7 @@
     <div class="logo-badge">DB</div>
     <h1>Админ-панель ателье</h1>
     <p class="sub">Меховое ателье «Дом Быта» · Хабаровск</p>
+    <?= csrf_field($csrf_login ?? null) ?>
     <?php if (!empty($error)): ?><div class="login-error"><?= e($error) ?></div><?php endif; ?>
     <div class="field" style="margin-bottom:14px">
       <label>Логин</label>
