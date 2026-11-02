@@ -84,3 +84,5 @@ function set_setting(string $k, string $v): void {
     db()->prepare("INSERT INTO settings(key,value) VALUES(?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value")
         ->execute([$k, $v]);
 }
+
+defined('ATELLE_BOOTSTRAP_OK') or define('ATELLE_BOOTSTRAP_OK', true);

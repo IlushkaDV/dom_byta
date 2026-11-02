@@ -255,3 +255,5 @@ function trim_signature(string $urlPath): void {
     imagepng($out, $src);
     imagedestroy($im); imagedestroy($out);
 }
+
+defined('ATELLE_BOOTSTRAP_OK') or define('ATELLE_BOOTSTRAP_OK', true);

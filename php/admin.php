@@ -382,3 +382,5 @@ function admin_post(string $path, string $AB): void {
         redirect(url($AB . '/password?saved=1'));
     }
 }
+
+defined('ATELLE_BOOTSTRAP_OK') or define('ATELLE_BOOTSTRAP_OK', true);

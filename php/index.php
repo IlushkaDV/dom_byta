@@ -8,10 +8,32 @@ error_reporting(E_ALL);
 ini_set('display_errors', '0');
 ini_set('log_errors', '1');
 
-require __DIR__ . '/defaults.php';
-require __DIR__ . '/helpers.php';
-require __DIR__ . '/db.php';
-require __DIR__ . '/admin.php';
+require_once __DIR__ . '/defaults.php';
+require_once __DIR__ . '/helpers.php';
+require_once __DIR__ . '/db.php';
+require_once __DIR__ . '/admin.php';
+
+/* Страховка от «Call to undefined function e()»: если на сервере остался старый
+   helpers.php (без этой функции), определяем её здесь, чтобы сайт не падал. */
+if (!function_exists('e')) {
+    function e($v): string { return htmlspecialchars((string)$v, ENT_QUOTES, 'UTF-8'); }
+}
+
+if (!defined('ATELLE_BOOTSTRAP_OK')) {
+    http_response_code(500);
+    $missing = [];
+    foreach (['/helpers.php' => 'url', '/db.php' => 'init_db', '/admin.php' => 'admin_get'] as $f => $fn) {
+        if (!file_exists(__DIR__ . $f)) { $missing[] = basename($f) . ' — файла нет на сервере'; }
+        elseif (!function_exists($fn))  { $missing[] = basename($f) . ' — файл старый, функция ' . $fn . ' отсутствует'; }
+    }
+    header('Content-Type: text/plain; charset=utf-8');
+    echo "Ошибка загрузки сайта: не все файлы обновлены.\n\n";
+    foreach ($missing as $m) echo " - $m\n";
+    echo "\nЧто делать: скачайте архив с https://github.com/IlushkaDV/dom_byta (Code -> Download ZIP)\n";
+    echo "и залейте СОДЕРЖИМОЕ папки php/ через FTP в корень сайта поверх старых файлов.\n";
+    echo "Папку data/ и uploads/ НЕ удаляйте. Скрытый файл .htaccess тоже должен быть загружен.\n";
+    exit;
+}
 
 session_start();
 security_headers();
