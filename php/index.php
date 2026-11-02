@@ -146,7 +146,7 @@ if ($path === '/') {
         $directions[] = $d;
     }
 
-    view('index', compact('s','services','advantages','gallery','reviews','priceTabs','directions') + ['steps' => DEFAULT_STEPS()]);
+    view('index', compact('s','services','advantages','gallery','reviews','priceTabs','directions') + ['steps' => load_steps()]);
     exit;
 }
 

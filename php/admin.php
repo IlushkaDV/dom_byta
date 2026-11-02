@@ -103,6 +103,10 @@ function admin_get(string $path, string $AB): void {
         aview('advantages', compact('admin', 'AB', 'today', 'advantages', 'text_fields') + ['s' => get_settings()]);
     }
 
+    if ($sub === '/steps') {
+        aview('steps', compact('admin', 'AB', 'today') + ['s' => get_settings(), 'steps' => load_steps()]);
+    }
+
     if ($sub === '/gallery') {
         $items = db()->query("SELECT * FROM gallery_items ORDER BY id DESC")->fetchAll();
         aview('gallery', compact('admin', 'AB', 'today', 'items'));
@@ -216,6 +220,42 @@ function admin_post(string $path, string $AB): void {
             }
         }
         redirect(url($AB . '/advantages?saved=1'));
+    }
+
+    if ($sub === '/steps/text') {
+        foreach (['steps_kicker', 'steps_title', 'steps_subtitle'] as $k) {
+            if (isset($_POST[$k])) set_setting($k, trim((string)$_POST[$k]));
+        }
+        redirect(url($AB . '/steps?saved=1'));
+    }
+    if ($sub === '/steps/save') {
+        $title = trim($_POST['title'] ?? '');
+        if ($title === '') { http_response_code(400); exit('Название этапа обязательно'); }
+        $steps = load_steps();
+        $row = ['title' => $title, 'text' => trim($_POST['text'] ?? ''), 'meta' => trim($_POST['meta'] ?? '')];
+        $id = (int)($_POST['id'] ?? -1);
+        if ($id >= 0 && isset($steps[$id])) $steps[$id] = $row; else $steps[] = $row;
+        set_setting('steps_json', json_encode(array_values($steps), JSON_UNESCAPED_UNICODE));
+        redirect(url($AB . '/steps?saved=1'));
+    }
+    if (preg_match('#^/steps/(\d+)/delete$#', $sub, $m)) {
+        $idx = (int)$m[1];
+        $steps = load_steps();
+        if (count($steps) > 1 && isset($steps[$idx])) {
+            unset($steps[$idx]);
+            set_setting('steps_json', json_encode(array_values($steps), JSON_UNESCAPED_UNICODE));
+        }
+        redirect(url($AB . '/steps'));
+    }
+    if (preg_match('#^/steps/(\d+)/(up|down)$#', $sub, $m)) {
+        $idx = (int)$m[1]; $dir = $m[2];
+        $steps = load_steps();
+        $swap = $dir === 'up' ? $idx - 1 : $idx + 1;
+        if (isset($steps[$idx]) && isset($steps[$swap])) {
+            [$steps[$idx], $steps[$swap]] = [$steps[$swap], $steps[$idx]];
+            set_setting('steps_json', json_encode(array_values($steps), JSON_UNESCAPED_UNICODE));
+        }
+        redirect(url($AB . '/steps'));
     }
 
     if ($sub === '/gallery/save') {

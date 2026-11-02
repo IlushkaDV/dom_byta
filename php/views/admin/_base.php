@@ -25,6 +25,7 @@
         ['/orders', 'orders', '☰', 'Заявки'],
         ['/services', 'services', '✂', 'Услуги и цены'],
         ['/advantages', 'advantages', '◆', 'Условия и надбавки'],
+        ['/steps', 'steps', '⚑', 'Этапы работы'],
         ['/gallery', 'gallery', '▦', 'Галерея работ'],
         ['/reviews', 'reviews', '★', 'Отзывы'],
         ['/settings', 'settings', '⚙', 'Настройки сайта'],

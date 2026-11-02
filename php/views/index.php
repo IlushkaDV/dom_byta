@@ -210,13 +210,13 @@
 <!-- ===== 7. СХЕМА РАБОТЫ ===== -->
 <section class="section steps-soft" id="steps">
   <div class="container">
-    <span class="section-kicker center reveal">Как мы работаем</span>
-    <h2 class="section-title center reveal">Схема безопасной работы</h2>
-    <p class="section-subtitle center reveal">Четыре шага — от первой встречи до готового изделия. Ни один рубль и ни один миллиметр не теряются по дороге.</p>
+    <span class="section-kicker center reveal"><?= e($s['steps_kicker'] ?? 'Как мы работаем') ?></span>
+    <h2 class="section-title center reveal"><?= e($s['steps_title'] ?? 'Схема безопасной работы') ?></h2>
+    <p class="section-subtitle center reveal"><?= e($s['steps_subtitle'] ?? '') ?></p>
     <div class="steps-wrap">
       <div class="steps-line">
-        <?php $step_meta = ["6 этаж ТЦ «Дом Быта»", "мех режем только после примерки", "импортное оборудование", "даём гарантию на работу"]; ?>
-        <?php foreach ($steps as $i => [$stitle, $stext]): ?>
+        <?php foreach ($steps as $i => $st): ?>
+        <?php $stitle = $st['title']; $stext = $st['text']; ?>
         <div class="step-card reveal" data-delay="<?= $i * 90 ?>">
           <div class="step-top">
             <span class="step-num"><?= $i + 1 ?></span>
@@ -234,7 +234,7 @@
           </div>
           <h3><?= e($stitle) ?></h3>
           <p><?= e($stext) ?></p>
-          <span class="step-meta"><?= e($step_meta[$i] ?? '') ?></span>
+          <span class="step-meta"><?= e($st['meta'] ?? '') ?></span>
         </div>
         <?php endforeach; ?>
       </div>
