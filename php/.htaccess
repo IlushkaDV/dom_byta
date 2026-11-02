@@ -1,0 +1,23 @@
+# Все запросы идут через index.php (кроме реально существующих файлов)
+<IfModule mod_rewrite.c>
+RewriteEngine On
+RewriteBase /
+
+# Защита служебных папок и файлов
+RewriteRule ^data/ - [F,L]
+RewriteRule ^(config|db|helpers|admin|defaults)\.php$ - [F,L]
+<FilesMatch "\.(sqlite|db|env|log)$">
+Require all denied
+</FilesMatch>
+
+# Статика отдаётся напрямую, если файл существует
+RewriteCond %{REQUEST_FILENAME} -f [OR]
+RewriteCond %{REQUEST_FILENAME} -d
+RewriteRule ^ - [L]
+
+# Остальное — в index.php
+RewriteRule ^ index.php [L]
+</IfModule>
+
+# Кодировка по умолчанию
+AddDefaultCharset UTF-8

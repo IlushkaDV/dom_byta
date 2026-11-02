@@ -63,3 +63,8 @@ def check_session_token(token: str) -> str | None:
         return login
     except Exception:
         return None
+
+
+def secret_bytes() -> bytes:
+    """Публичный доступ к секретному ключу (для CSRF-токенов и т.п.)."""
+    return _secret_key()

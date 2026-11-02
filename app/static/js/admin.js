@@ -28,7 +28,7 @@ document.addEventListener("click", e => {
   const btn = e.target.closest("[data-edit]");
   if (!btn) return;
   let data;
-  try { data = JSON.parse(btn.dataset.edit); } catch { return; }
+  try { data = JSON.parse(btn.dataset.edit); } catch (err) { return; }
   const modal = document.getElementById(btn.dataset.open || "editModal");
   if (!modal) return;
   modal.querySelectorAll("[name]").forEach(input => {
@@ -36,8 +36,14 @@ document.addEventListener("click", e => {
     const val = data[input.name];
     if (input.type === "checkbox") input.checked = !!Number(val);
     else if (input.tagName === "SELECT") input.value = val;
+    else if (input.type === "file") { /* value нельзя задать для file */ }
     else input.value = val;
   });
+  // Показываем, какие фото уже загружены (при редактировании)
+  const bHint = modal.querySelector(".hint[data-for=before_image]");
+  if (bHint) bHint.textContent = data.before_image_path ? "Фото «До» уже загружено (новое заменит его)" : "";
+  const aHint = modal.querySelector(".hint[data-for=after_image]");
+  if (aHint) aHint.textContent = data.after_image_path ? "Фото «После» уже загружено (новое заменит его)" : "";
 });
 
 // Удаление с подтверждением

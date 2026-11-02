@@ -4,9 +4,9 @@
 {% block content %}
 
 <div class="filters">
-  <a href="/admin/orders" {% if not cur_status %}class="active"{% endif %}>Все</a>
+  <a href="{{ admin_base }}/orders" {% if not cur_status %}class="active"{% endif %}>Все</a>
   {% for key, label in status_labels.items() %}
-  <a href="/admin/orders?status={{ key }}" {% if cur_status == key %}class="active"{% endif %}>{{ label }}</a>
+  <a href="{{ admin_base }}/orders?status={{ key }}" {% if cur_status == key %}class="active"{% endif %}>{{ label }}</a>
   {% endfor %}
 </div>
 
@@ -25,10 +25,19 @@
           {% if o.email %}<br><a href="mailto:{{ o.email }}" style="font-size:12px;color:#8a8174">{{ o.email }}</a>{% endif %}
         </td>
         <td>{{ o.service or '—' }}</td>
-        <td style="max-width:260px">{{ o.message or '—' }}</td>
+        <td style="max-width:260px">
+          {% if o.visit_date or (o.visit_time and o.visit_time|default('')) %}
+          <div class="order-visit">📅 {{ o.visit_date or '' }}{% if o.visit_time %} в {{ o.visit_time }}{% endif %}</div>
+          {% endif %}
+          {{ o.message or '—' }}
+          {% if o.pd_consent_at and o.pd_consent_at|default('') %}
+          <div class="order-consent">Согласие на ПД: {{ o.pd_consent_at }}</div>
+          {% endif %}
+        </td>
         <td><span class="badge badge-{{ o.status }}">{{ status_labels[o.status] }}</span></td>
         <td>
-          <form method="post" action="/admin/orders/{{ o.id }}/status" style="display:flex;gap:6px;margin-bottom:6px">
+          <form method="post" action="{{ admin_base }}/orders/{{ o.id }}/status" style="display:flex;gap:6px;margin-bottom:6px">
+  <input type="hidden" name="_csrf" value="{{ request.state.csrf }}">
             <select name="status" style="padding:6px 8px;border-radius:8px;border:1px solid rgba(32,27,21,.15);font:inherit;font-size:12.5px">
               {% for key, label in status_labels.items() %}
               <option value="{{ key }}" {% if o.status == key %}selected{% endif %}>{{ label }}</option>
@@ -36,7 +45,8 @@
             </select>
             <button class="btn btn-sm" type="submit">OK</button>
           </form>
-          <form method="post" action="/admin/orders/{{ o.id }}/delete" data-confirm="Удалить заявку #{{ o.id }}?">
+          <form method="post" action="{{ admin_base }}/orders/{{ o.id }}/delete" data-confirm="Удалить заявку #{{ o.id }}?">
+  <input type="hidden" name="_csrf" value="{{ request.state.csrf }}">
             <button class="btn btn-danger" type="submit">Удалить</button>
           </form>
         </td>

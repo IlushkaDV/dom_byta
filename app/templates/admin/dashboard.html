@@ -14,7 +14,7 @@
 <div class="panel">
   <div class="panel-head">
     <h2>Последние заявки</h2>
-    <a href="/admin/orders" class="btn btn-sm">Все заявки →</a>
+    <a href="{{ admin_base }}/orders" class="btn btn-sm">Все заявки →</a>
   </div>
   {% if recent_orders %}
   <table>
@@ -39,10 +39,10 @@
 <div class="panel">
   <h2>Быстрые действия</h2>
   <div style="display:flex;gap:10px;flex-wrap:wrap">
-    <a data-open="addServiceModal" href="/admin/services" class="btn btn-gold btn-sm">＋ Добавить услугу</a>
-    <a data-open="addGalleryModal" href="/admin/gallery" class="btn btn-sm">＋ Добавить работу в галерею</a>
-    <a data-open="addReviewModal" href="/admin/reviews" class="btn btn-sm">＋ Добавить отзыв</a>
-    <a href="/admin/settings" class="btn btn-sm">⚙ Настройки сайта</a>
+    <a data-open="addServiceModal" href="{{ admin_base }}/services" class="btn btn-gold btn-sm">＋ Добавить услугу</a>
+    <a data-open="addGalleryModal" href="{{ admin_base }}/gallery" class="btn btn-sm">＋ Добавить работу в галерею</a>
+    <a data-open="addReviewModal" href="{{ admin_base }}/reviews" class="btn btn-sm">＋ Добавить отзыв</a>
+    <a href="{{ admin_base }}/settings" class="btn btn-sm">⚙ Настройки сайта</a>
   </div>
 </div>
 
