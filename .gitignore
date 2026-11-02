@@ -1,4 +1,3 @@
-__pycache__/
-*.pyc
-*.log
-data/*.db
+php/data/.admin_path
+php/data/.secret_key
+*.sqlite
